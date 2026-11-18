@@ -30,6 +30,9 @@ out/
 npm-debug.log*
 yarn-error.log*
 
+# --- Generated output ---
+generated_documents/
+
 # --- Editors and OS junk ---
 .vscode/
 .idea/
