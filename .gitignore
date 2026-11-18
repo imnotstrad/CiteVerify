@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------
+# Git will never save anything listed here.
+# If a file or folder matches a line below, Git pretends it does
+# not exist. When in doubt, add it — you can always remove a line.
+# ---------------------------------------------------------------
+
+# --- Secrets: the most important block in this file ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+*.egg-info/
+
+# --- Node / web frontend ---
+node_modules/
+dist/
+build/
+.next/
+out/
+npm-debug.log*
+yarn-error.log*
+
+# --- Editors and OS junk ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Large or generated data (uncomment if you use them) ---
+# data/
+# *.csv
+# *.pkl
+# *.zip
