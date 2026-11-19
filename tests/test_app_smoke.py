@@ -150,6 +150,29 @@ def test_pdf_button_absent_before_the_last_card(app):
     assert fake.downloads == []
 
 
+def test_reading_failure_explains_a_retired_model(app, monkeypatch):
+    module, fake = app
+    paper = types.SimpleNamespace(title="Paper", pages=[], filename="p.pdf")
+    monkeypatch.setattr(module, "extract_text", lambda text, filename: paper)
+
+    class ApiError(RuntimeError):
+        status_code = 404
+        body = [{"error": {"code": 404, "message": "model no longer available"}}]
+
+    def boom(*args, **kwargs):
+        raise ApiError("Error code: 404")
+
+    monkeypatch.setattr(module, "extract_claims_and_references", boom)
+    state = module.st.session_state
+    state.stage = "reading"
+    state.pending = {"kind": "text", "text": "x"}
+    module.main()
+
+    assert "not available" in state.analysis_error
+    assert "LLM_MODEL" in state.analysis_error
+    assert "no longer available" in state.analysis_error
+
+
 def test_every_card_has_try_new_pdf(app):
     module, fake = app
     for index in range(_total(module)):

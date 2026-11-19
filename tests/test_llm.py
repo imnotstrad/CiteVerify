@@ -3,7 +3,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from citeverify.config import Settings
-from citeverify.llm import LLMClient, is_retryable_error, parse_json_object
+from citeverify.llm import LLMClient, error_detail, is_retryable_error, parse_json_object
 
 
 class _Out(BaseModel):
@@ -59,6 +59,38 @@ def test_is_retryable_error_detects_rate_limits_and_status_codes():
     assert is_retryable_error(quota)
     assert is_retryable_error(status)
     assert not is_retryable_error(auth)
+
+
+def test_default_model_matches_the_configured_gemini_endpoint(monkeypatch):
+    from citeverify import config
+
+    monkeypatch.setenv("LLM_MODEL", "")
+    monkeypatch.setenv(
+        "LLM_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/"
+    )
+    config.get_settings.cache_clear()
+    try:
+        assert config.get_settings().llm_model == "gemini-3.5-flash-lite"
+    finally:
+        config.get_settings.cache_clear()
+
+
+def test_error_detail_keeps_the_provider_message():
+    class ApiError(RuntimeError):
+        status_code = 404
+        body = [
+            {
+                "error": {
+                    "code": 404,
+                    "message": "This model models/gemini-2.5-flash is no longer available",
+                }
+            }
+        ]
+
+    detail = error_detail(ApiError("Error code: 404"))
+
+    assert "Error code: 404" in detail
+    assert "no longer available" in detail
 
 
 def test_parse_json_object_survives_code_fence():

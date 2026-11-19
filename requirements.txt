@@ -1,11 +1,13 @@
-streamlit>=1.40
-pymupdf>=1.24
-httpx>=0.27
-pydantic>=2.8
-python-dotenv>=1.0
-tenacity>=9.0
-rapidfuzz>=3.9
-openai>=1.50
-pytest>=8.0
-sentence-transformers>=3.0
-reportlab>=4.0
+# Pinned to the versions exercised locally on Python 3.13 so a Render rebuild
+# cannot silently pick up an incompatible Streamlit/OpenAI/PyMuPDF release.
+streamlit==1.67.0
+pymupdf==2.1
+httpx==0.28.1
+pydantic==2.14.3
+python-dotenv==1.2.4
+tenacity==9.2.1
+rapidfuzz==3.14.6
+openai==3.55.1
+pytest==9.2.0
+sentence-transformers==6.3.0
+reportlab==5.1.0

@@ -43,8 +43,16 @@ class Settings:
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     api_key = os.getenv("LLM_API_KEY", "").strip() or None
-    model = os.getenv("LLM_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
     base_url = os.getenv("LLM_BASE_URL", "").strip() or None
+    # Gemini's OpenAI-compatible endpoint does not serve OpenAI model names, and
+    # older Gemini models get retired. Keep the fallback valid for the endpoint
+    # that is actually configured instead of defaulting to gpt-4o-mini.
+    default_model = (
+        "gemini-3.5-flash-lite"
+        if base_url and "generativelanguage.googleapis.com" in base_url
+        else "gpt-4o-mini"
+    )
+    model = os.getenv("LLM_MODEL", default_model).strip() or default_model
     mailto = os.getenv("CROSSREF_MAILTO", "team@example.com").strip() or "team@example.com"
 
     return Settings(

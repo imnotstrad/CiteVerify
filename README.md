@@ -43,7 +43,7 @@ Copy-Item .env.example .env
 
 ```env
 LLM_API_KEY=...
-LLM_MODEL=gpt-4o-mini
+LLM_MODEL=gemini-3.5-flash-lite
 CROSSREF_MAILTO=you@example.com
 ```
 
@@ -96,7 +96,7 @@ Environment variables (Dashboard → Environment):
 | `PYTHON_VERSION` | `3.13.5` |
 | `LLM_API_KEY` | your Gemini key — **secret**, never commit |
 | `LLM_BASE_URL` | `https://generativelanguage.googleapis.com/v1beta/openai/` |
-| `LLM_MODEL` | `gemini-2.5-flash` |
+| `LLM_MODEL` | `gemini-3.5-flash-lite` — `gemini-2.5-flash` is retired and returns 404 |
 | `CROSSREF_MAILTO` | your email |
 
 Without `LLM_API_KEY` the deployed app still runs, but only in demo mode.

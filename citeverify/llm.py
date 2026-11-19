@@ -58,6 +58,26 @@ def is_retryable_error(exc: Exception) -> bool:
     return any(marker in message for marker in RETRYABLE_MARKERS)
 
 
+def error_detail(exc: Exception) -> str:
+    """Keep the provider's explanation, not just ``Error code: 404``.
+
+    The OpenAI SDK puts the useful message (for example, a retired model name) in
+    ``exc.body`` while ``str(exc)`` is only the status line. Losing it made deployed
+    failures impossible to diagnose from the UI.
+    """
+    detail = str(exc)
+    body = getattr(exc, "body", None)
+    if body is None:
+        return detail
+    try:
+        rendered = json.dumps(body, ensure_ascii=False)
+    except (TypeError, ValueError):
+        rendered = str(body)
+    if rendered and rendered not in detail:
+        detail = f"{detail} {rendered[:600]}"
+    return detail
+
+
 def parse_json_object(text: str) -> dict:
     text = _strip_code_fence(text)
     try:
@@ -110,6 +130,7 @@ class LLMClient:
             {"role": "user", "content": user},
         ]
         last_error: Exception | None = None
+        last_detail = ""
 
         for attempt in range(1, max_attempts + 1):
             raw = ""
@@ -125,6 +146,7 @@ class LLMClient:
                 return schema.model_validate(data)
             except (json.JSONDecodeError, ValidationError, ValueError) as exc:
                 last_error = exc
+                last_detail = str(exc)
                 messages.extend(
                     [
                         {"role": "assistant", "content": raw or "{}"},
@@ -139,10 +161,11 @@ class LLMClient:
                 )
             except Exception as exc:  # API/network errors
                 last_error = exc
+                last_detail = error_detail(exc)
                 # Free tiers rate-limit hard; backing off beats losing a verdict.
                 if is_retryable_error(exc) and attempt < max_attempts:
                     time.sleep(min(2 ** (attempt - 1), 8))
                     continue
                 break
 
-        raise LLMError(f"The model did not return usable JSON: {last_error}")
+        raise LLMError(f"The model did not return usable JSON: {last_detail}")

@@ -17,7 +17,7 @@ from citeverify.config import Settings, get_settings
 from citeverify.evidence import find_evidence, highlight
 from citeverify.extract import ExtractionError, extract_claims_and_references
 from citeverify.ingest import extract_pdf, extract_text
-from citeverify.llm import LLMClient, LLMUnavailable
+from citeverify.llm import LLMClient, LLMUnavailable, error_detail
 from citeverify.pdf_export import PDFUnavailable, build_fixes_pdf
 from citeverify.models import ClaimResult, Confidence, Reference, Report, Verdict
 from citeverify.report import (
@@ -144,7 +144,7 @@ def inject_css(dark: bool = False) -> None:
     .hl-passage .best {{background:#FFE082;color:#172026!important;padding:2px 3px;border-radius:4px;}}
 
     /* Buttons: normal, primary, popover trigger and file-picker button */
-    .stButton>button,.stDownloadButton>button,
+    [data-testid="stButton"] button,[data-testid="stDownloadButton"] button,
     [data-testid="stPopover"] > button,
     [data-testid="stFileUploader"] button {{
       border-radius:10px!important;
@@ -153,15 +153,15 @@ def inject_css(dark: bool = False) -> None:
       background:var(--cv-panel)!important;
       color:var(--cv-text)!important;
     }}
-    .stButton>button[kind="primary"] {{
+    [data-testid="stButton"] button[kind="primary"] {{
       background:var(--cv-accent)!important;
       color:#071A18!important;
       border-color:var(--cv-accent)!important;
     }}
-    .stButton>button:disabled {{color:var(--cv-muted)!important;opacity:.55;}}
+    [data-testid="stButton"] button:disabled {{color:var(--cv-muted)!important;opacity:.55;}}
     [data-testid="stPopover"] > button:hover,
     [data-testid="stFileUploader"] button:hover,
-    .stButton>button:hover {{border-color:var(--cv-accent)!important;}}
+    [data-testid="stButton"] button:hover {{border-color:var(--cv-accent)!important;}}
 
     /* Inputs and PDF drop zone */
     [data-baseweb="input"]>div,[data-baseweb="textarea"]>div,
@@ -330,7 +330,7 @@ def render_topbar() -> None:
     with center:
         st.markdown('<div class="cv-topbar"><div class="cv-brand">CiteVerify</div></div>', unsafe_allow_html=True)
     with right:
-        with st.popover("About us", use_container_width=True):
+        with st.popover("About us", width="stretch"):
             st.markdown(
                 """
                 <div class="cv-about-panel">
@@ -353,11 +353,19 @@ READING_STEPS = [
 ]
 
 
-def friendly_error(exc: Exception) -> str:
-    text = str(exc)
+def friendly_error(exc: Exception, settings: Settings | None = None) -> str:
+    text = error_detail(exc)
     if isinstance(exc, (LLMUnavailable, ExtractionError, ValueError)):
         return text
     lowered = text.lower()
+    if "404" in lowered or "not_found" in lowered or "no longer available" in lowered:
+        model = settings.llm_model if settings else "the configured model"
+        return (
+            f"The model '{model}' is not available on the configured endpoint. "
+            "Set LLM_MODEL to a supported model (gemini-3.5-flash-lite works with "
+            "the Gemini endpoint) and redeploy. "
+            f"Provider said: {text}"
+        )
     if "401" in lowered or "api key" in lowered or "api_key" in lowered:
         return (
             f"{text} Check LLM_API_KEY and LLM_BASE_URL. "
@@ -491,7 +499,7 @@ def render_reading(settings: Settings, llm: LLMClient) -> None:
     try:
         report = analyze_pending(st.session_state.pending, settings, llm, slot)
     except Exception as exc:
-        st.session_state.analysis_error = friendly_error(exc)
+        st.session_state.analysis_error = friendly_error(exc, settings)
         st.rerun()
         return
 
@@ -573,7 +581,7 @@ def render_reliability(reference) -> None:
             {"Factor": f["factor"], "Score": f"{f['points']}/{f['max']}", "Detail": f["reason"]}
             for f in analysis["factors"]
         ],
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
     for flag in analysis["flags"]:
@@ -661,7 +669,9 @@ def render_claim(
 
         render_highlighted_evidence(result)
 
-        action_left, action_right = st.columns([3, 2])
+        action_left, action_middle, action_right = st.columns(
+            [3, 2, 2], vertical_alignment="center"
+        )
         with action_left:
             if result.source_url:
                 st.markdown(f"[Open cited source ↗]({result.source_url})")
@@ -669,6 +679,13 @@ def render_claim(
                 st.markdown(f"[Open cited source ↗](https://doi.org/{result.reference.doi})")
             else:
                 st.caption("No source link available.")
+        with action_middle:
+            st.button(
+                "Try a new PDF",
+                key=f"new_pdf_{result.claim.id}",
+                on_click=go_home,
+                help="Start over with a different paper.",
+            )
         with action_right:
             st.checkbox(
                 "Reviewed",
@@ -780,7 +797,7 @@ def render_export(report: Report) -> None:
                 mime="application/pdf",
                 type="primary",
                 key="download_pdf",
-                use_container_width=True,
+                width="stretch",
             )
         md_col, json_col = st.columns(2)
         with md_col:
@@ -790,7 +807,7 @@ def render_export(report: Report) -> None:
                 file_name="citeverify_report.md",
                 mime="text/markdown",
                 key="download_md",
-                use_container_width=True,
+                width="stretch",
             )
         with json_col:
             st.download_button(
@@ -799,7 +816,7 @@ def render_export(report: Report) -> None:
                 file_name="citeverify_report.json",
                 mime="application/json",
                 key="download_json",
-                use_container_width=True,
+                width="stretch",
             )
 
 
@@ -831,11 +848,23 @@ def render_report(report: Report, settings: Settings, llm: LLMClient) -> None:
     st.markdown('<div class="cv-card-controls"></div>', unsafe_allow_html=True)
     left, middle, right = st.columns([1, 5, 1], vertical_alignment="center")
     with left:
-        previous_clicked = st.button("←", key="previous_claim", help="Previous claim", disabled=current_index == 0, use_container_width=True)
+        previous_clicked = st.button(
+            "←",
+            key="previous_claim",
+            help="First claim — there is no previous claim" if current_index == 0 else "Previous claim",
+            disabled=current_index == 0,
+            width="stretch",
+        )
     with middle:
         st.markdown(f'<div style="text-align:center;color:var(--cv-muted);font-weight:700;letter-spacing:.08em;padding:.55rem 0;">CLAIM {current_index+1:02d} / {len(shown):02d}</div>', unsafe_allow_html=True)
     with right:
-        next_clicked = st.button("→", key="next_claim", help="Next claim", disabled=current_index == len(shown)-1, use_container_width=True)
+        next_clicked = st.button(
+            "→",
+            key="next_claim",
+            help="Last claim — there is no next claim" if current_index == len(shown) - 1 else "Next claim",
+            disabled=current_index == len(shown) - 1,
+            width="stretch",
+        )
     if previous_clicked:
         st.session_state.claim_index = max(0, current_index-1)
         st.rerun()
@@ -843,13 +872,6 @@ def render_report(report: Report, settings: Settings, llm: LLMClient) -> None:
         st.session_state.claim_index = min(len(shown)-1, current_index+1)
         st.rerun()
     st.progress((current_index+1)/len(shown))
-
-    st.button(
-        "Try a new PDF",
-        key=f"new_pdf_{current_index}",
-        on_click=go_home,
-        help="Start over with another paper",
-    )
 
     if current_index == len(shown) - 1:
         render_export(report)
@@ -894,7 +916,7 @@ def render_evaluation(settings: Settings) -> None:
         }
         for row in data.get("rows", [])
     ]
-    st.dataframe(rows, use_container_width=True, hide_index=True)
+    st.dataframe(rows, width="stretch", hide_index=True)
     st.caption("Small sample. Do not present this as a general accuracy claim.")
 
 
@@ -1012,7 +1034,7 @@ def render_empty_state(settings: Settings, llm: LLMClient) -> None:
         st.button(
             "Research claims",
             type="primary",
-            use_container_width=True,
+            width="stretch",
             on_click=on_analyze_text,
             key="analyze_text",
         )
@@ -1092,14 +1114,14 @@ button[role="tab"][aria-selected="true"] {color:var(--cv-text)!important;}
 /* Focus, hover and selection */
 :focus-visible {outline:2px solid var(--cv-accent)!important;outline-offset:2px;}
 ::selection {background:var(--cv-accent);color:#071A18;}
-.stButton>button:hover:not(:disabled),.stDownloadButton>button:hover {background:var(--cv-panel-alt)!important;}
-.stButton>button[kind="primary"]:hover:not(:disabled) {filter:brightness(1.08);background:var(--cv-accent)!important;}
-.stButton>button:disabled {border-style:dashed!important;}
-.stDownloadButton>button[kind="primary"] {background:var(--cv-accent)!important;color:#071A18!important;border-color:var(--cv-accent)!important;}
+[data-testid="stButton"] button:hover:not(:disabled),[data-testid="stDownloadButton"] button:hover {background:var(--cv-panel-alt)!important;}
+[data-testid="stButton"] button[kind="primary"]:hover:not(:disabled) {filter:brightness(1.08);background:var(--cv-accent)!important;}
+[data-testid="stButton"] button:disabled {border-style:dashed!important;}
+[data-testid="stDownloadButton"] button[kind="primary"] {background:var(--cv-accent)!important;color:#071A18!important;border-color:var(--cv-accent)!important;}
 ::-webkit-scrollbar {width:10px;height:10px;}
 ::-webkit-scrollbar-thumb {background:var(--cv-border-strong);border-radius:8px;}
 ::-webkit-scrollbar-track {background:transparent;}
-.stButton>button:disabled {background:var(--cv-panel-alt)!important;cursor:not-allowed;}
+[data-testid="stButton"] button:disabled {background:var(--cv-panel-alt)!important;cursor:not-allowed;}
 </style>
 """
 
