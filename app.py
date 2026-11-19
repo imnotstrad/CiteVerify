@@ -668,11 +668,5 @@ def main() -> None:
     else:
         render_report(report, settings, llm)
 
-
-if __name__ == "__main__":
-    main()
-
-
-
 if __name__ == "__main__":
     main()
