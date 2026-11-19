@@ -93,23 +93,24 @@ def inject_css(dark: bool = False) -> None:
       --cv-info-bg:{palette["info_bg"]}; --cv-info-text:{palette["info_text"]};
       --cv-neutral-bg:{palette["neutral_bg"]}; --cv-neutral-text:{palette["neutral_text"]};
     }}
+
+    /* Page and ordinary text */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
-      background:var(--cv-bg)!important; color:var(--cv-text)!important;
+      background:var(--cv-bg)!important;
+      color:var(--cv-text)!important;
       font-family:Inter,system-ui,sans-serif;
     }}
     .block-container {{max-width:1000px;padding-top:1.2rem;padding-bottom:3rem;}}
     [data-testid="stSidebar"], [data-testid="collapsedControl"] {{display:none!important;}}
     header[data-testid="stHeader"] {{background:transparent!important;}}
-    /* Default text. Avoid blanket rules on every nested element: component-specific
-       foregrounds below must remain paired with their own background surfaces. */
-    h1,h2,h3,h4,p,li,label,.stMarkdown,.stMarkdown p,.stMarkdown li,
-    [data-testid="stMarkdownContainer"],[data-testid="stCaptionContainer"],
-    [data-testid="stWidgetLabel"],[data-testid="stFileUploaderDropzoneInstructions"] {{
-      color:var(--cv-text)!important;
-    }}
-    .stCaption,[data-testid="stCaptionContainer"] {{color:var(--cv-muted)!important;}}
+    h1,h2,h3,h4,p,li,label,
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stWidgetLabel"] {{color:var(--cv-text)!important;}}
+    [data-testid="stCaptionContainer"] {{color:var(--cv-muted)!important;}}
     h1,h2,h3,.cv-brand,.cv-title,.claim-card-title {{font-family:'Source Serif 4',Georgia,serif;}}
     a {{color:var(--cv-accent)!important;}}
+
+    /* Brand and headings */
     .cv-topbar {{display:flex;align-items:center;justify-content:center;padding:.15rem 0 1rem;}}
     .cv-brand {{font-size:2rem;font-weight:700;letter-spacing:-.04em;color:var(--cv-text);}}
     .cv-tag {{font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--cv-muted);}}
@@ -117,8 +118,10 @@ def inject_css(dark: bool = False) -> None:
     .cv-kicker {{color:var(--cv-accent)!important;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;}}
     .cv-title {{font-size:2rem;line-height:1.15;color:var(--cv-text);margin:.15rem 0 .3rem;}}
     .cv-sub,.small-muted,.source-line,.confidence-note {{color:var(--cv-muted)!important;}}
+
+    /* Cards: each surface has a paired foreground */
     .summary-card {{background:var(--cv-panel);border:1px solid var(--cv-border);border-radius:14px;padding:.8rem .9rem;}}
-    .summary-value {{font-size:1.6rem;font-weight:700;color:var(--cv-text);}}
+    .summary-value {{font-size:1.6rem;font-weight:700;color:var(--cv-text)!important;}}
     .summary-label,.claim-card-eyebrow {{color:var(--cv-muted)!important;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;}}
     .claim-card-title {{font-size:1.4rem;font-weight:600;line-height:1.45;color:var(--cv-text)!important;margin:.5rem 0 1rem;}}
     .verdict-badge {{display:inline-block;padding:.32rem .72rem;border-radius:999px;font-size:.68rem;font-weight:700;text-transform:uppercase;}}
@@ -131,28 +134,96 @@ def inject_css(dark: bool = False) -> None:
     .hl-passage,[data-testid="stVerticalBlockBorderWrapper"] {{background:var(--cv-panel)!important;border:1px solid var(--cv-border)!important;border-radius:16px;}}
     .hl-passage mark {{background:#FFF3A3;color:#172026!important;padding:0 2px;border-radius:3px;}}
     .hl-passage .best {{background:#FFE082;color:#172026!important;padding:2px 3px;border-radius:4px;}}
-    .stButton>button,.stDownloadButton>button {{border-radius:10px;border:1px solid var(--cv-border);min-height:2.6rem;background:var(--cv-panel);color:var(--cv-text)!important;}}
-    .stButton>button[kind="primary"] {{background:var(--cv-accent)!important;color:#071A18!important;border-color:var(--cv-accent)!important;}}
+
+    /* Buttons: normal, primary, popover trigger and file-picker button */
+    .stButton>button,.stDownloadButton>button,
+    [data-testid="stPopover"] > button,
+    [data-testid="stFileUploader"] button {{
+      border-radius:10px!important;
+      border:1px solid var(--cv-border)!important;
+      min-height:2.6rem;
+      background:var(--cv-panel)!important;
+      color:var(--cv-text)!important;
+    }}
+    .stButton>button[kind="primary"] {{
+      background:var(--cv-accent)!important;
+      color:#071A18!important;
+      border-color:var(--cv-accent)!important;
+    }}
     .stButton>button:disabled {{color:var(--cv-muted)!important;opacity:.55;}}
-    [data-baseweb="input"]>div,[data-baseweb="textarea"]>div,[data-baseweb="select"]>div,
-    [data-testid="stFileUploaderDropzone"] {{background:var(--cv-input)!important;border-color:var(--cv-border)!important;}}
-    input,textarea,[data-baseweb="input"] input,[data-baseweb="textarea"] textarea {{color:var(--cv-text)!important;background:transparent!important;}}
+    [data-testid="stPopover"] > button:hover,
+    [data-testid="stFileUploader"] button:hover,
+    .stButton>button:hover {{border-color:var(--cv-accent)!important;}}
+
+    /* Inputs and PDF drop zone */
+    [data-baseweb="input"]>div,[data-baseweb="textarea"]>div,
+    [data-baseweb="select"]>div,
+    [data-testid="stFileUploaderDropzone"] {{
+      background:var(--cv-input)!important;
+      border:1px solid var(--cv-border)!important;
+    }}
+    input,textarea,[data-baseweb="input"] input,[data-baseweb="textarea"] textarea {{
+      color:var(--cv-text)!important;background:transparent!important;
+    }}
     input::placeholder,textarea::placeholder {{color:var(--cv-muted)!important;opacity:1;}}
-    [data-testid="stFileUploaderDropzone"] * {{color:var(--cv-text)!important;}}
-    /* Streamlit alerts, expanders, popovers, metrics, dataframes and code surfaces. */
-    [data-testid="stAlert"] {{background:var(--cv-panel-alt)!important;border:1px solid var(--cv-border)!important;border-radius:12px;}}
-    [data-testid="stAlert"] p,[data-testid="stAlert"] span,[data-testid="stAlert"] li {{color:var(--cv-text)!important;}}
-    [data-testid="stExpander"] {{background:var(--cv-panel)!important;border:1px solid var(--cv-border)!important;border-radius:12px;}}
-    [data-testid="stExpander"] summary,[data-testid="stExpander"] summary span {{color:var(--cv-text)!important;}}
-    [data-testid="stPopover"] button,[data-baseweb="popover"],[data-baseweb="menu"] {{color:var(--cv-text)!important;}}
-    [data-baseweb="popover"] > div,[data-baseweb="menu"] {{background:var(--cv-panel)!important;border-color:var(--cv-border)!important;}}
-    [data-baseweb="popover"] *,[data-baseweb="menu"] * {{color:var(--cv-text)!important;}}
-    [data-testid="stMetric"] {{background:var(--cv-panel)!important;border:1px solid var(--cv-border)!important;border-radius:12px;padding:.7rem;}}
-    [data-testid="stMetricLabel"],[data-testid="stMetricValue"],[data-testid="stMetricDelta"] {{color:var(--cv-text)!important;}}
-    [data-testid="stDataFrame"],[data-testid="stTable"] {{background:var(--cv-panel)!important;color:var(--cv-text)!important;}}
-    [data-testid="stCode"],.stCodeBlock {{background:var(--cv-panel-alt)!important;border:1px solid var(--cv-border)!important;}}
+    [data-testid="stFileUploaderDropzone"] {{
+      border:1px dashed var(--cv-border)!important;
+      border-radius:12px!important;
+    }}
+    [data-testid="stFileUploaderDropzone"] p,
+    [data-testid="stFileUploaderDropzone"] span,
+    [data-testid="stFileUploaderDropzone"] small {{
+      color:var(--cv-text)!important;
+    }}
+    [data-testid="stFileUploader"] button {{
+      background:var(--cv-panel)!important;
+      color:var(--cv-text)!important;
+    }}
+
+    /* Streamlit message surfaces: keep text readable on the surface behind it */
+    [data-testid="stAlert"] {{
+      background:var(--cv-panel-alt)!important;
+      border:1px solid var(--cv-border)!important;
+      border-radius:12px!important;
+    }}
+    [data-testid="stAlert"] p,
+    [data-testid="stAlert"] span,
+    [data-testid="stAlert"] li {{color:var(--cv-text)!important;}}
+    [data-testid="stExpander"] {{
+      background:var(--cv-panel)!important;
+      border:1px solid var(--cv-border)!important;
+      border-radius:12px!important;
+    }}
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] summary span {{color:var(--cv-text)!important;}}
+    [data-testid="stMetric"] {{
+      background:var(--cv-panel)!important;
+      border:1px solid var(--cv-border)!important;
+      border-radius:12px!important;padding:.7rem;
+    }}
+    [data-testid="stMetricLabel"],[data-testid="stMetricValue"],
+    [data-testid="stMetricDelta"] {{color:var(--cv-text)!important;}}
+    [data-testid="stDataFrame"],[data-testid="stTable"] {{
+      background:var(--cv-panel)!important;color:var(--cv-text)!important;
+    }}
+    [data-testid="stCode"],.stCodeBlock {{
+      background:var(--cv-panel-alt)!important;
+      border:1px solid var(--cv-border)!important;
+    }}
     [data-testid="stProgressBar"]>div>div {{background:var(--cv-accent)!important;}}
     [data-testid="stCheckbox"] label,[data-testid="stRadio"] label {{color:var(--cv-text)!important;}}
+
+    /* Popover body: don't apply wildcard foreground overrides to buttons/icons. */
+    [data-testid="stPopoverBody"] {{
+      background:var(--cv-panel)!important;
+      color:var(--cv-text)!important;
+      border:1px solid var(--cv-border)!important;
+    }}
+    [data-testid="stPopoverBody"] h1,
+    [data-testid="stPopoverBody"] h2,
+    [data-testid="stPopoverBody"] h3,
+    [data-testid="stPopoverBody"] p,
+    [data-testid="stPopoverBody"] strong {{color:var(--cv-text)!important;}}
     </style>
     """, unsafe_allow_html=True)
 
@@ -675,7 +746,7 @@ def render_empty_state(settings: Settings, llm: LLMClient) -> None:
     pasted = st.text_area("Paste paper text", height=86, placeholder="Paste the paper text, including its reference list.", label_visibility="collapsed", key="home_pasted")
     col1, col2 = st.columns([1, 3], vertical_alignment="center")
     with col1:
-        max_claims = st.selectbox("Claims to review", [4, 6, 8, 10], index=2, label_visibility="collapsed")
+        max_claims = st.slider("Claims to review", min_value=4, max_value=10, value=8, step=2)
     with col2:
         if st.button("Research claims", type="primary", use_container_width=True, disabled=(uploaded is None and not pasted.strip())):
             run_analysis(uploaded, pasted, int(max_claims), settings, llm)
