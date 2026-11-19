@@ -154,7 +154,7 @@ def render_topbar() -> None:
     with left:
         st.toggle("Dark mode", key="dark_mode", help="Switch between dark and light appearance.")
     with center:
-        st.markdown('<div class="cv-topbar"><div><div class="cv-brand">CiteVerify</div><div class="cv-tag">Evidence, not verdicts</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="cv-topbar"><div class="cv-brand">CiteVerify</div></div>', unsafe_allow_html=True)
     with right:
         with st.popover("About me", use_container_width=True):
             st.markdown("### About CiteVerify")
@@ -635,11 +635,10 @@ def render_deployment_diagnostics(settings: Settings) -> None:
 
 
 def render_empty_state(settings: Settings, llm: LLMClient) -> None:
-    st.markdown('<div style="text-align:center;padding:5vh 0 2vh;"><div class="cv-title">CiteVerify</div><div class="cv-sub">Evidence, not verdicts.</div></div>', unsafe_allow_html=True)
-    st.markdown('<div style="text-align:center;color:var(--cv-muted);margin:0 auto 1rem;max-width:620px;">Drop a research paper here to check whether its cited sources actually support its claims.</div>', unsafe_allow_html=True)
+    st.markdown('<div style="text-align:center;padding:4vh 0 1.5vh;color:var(--cv-muted);">Drop a research paper into the upload area to begin.</div>', unsafe_allow_html=True)
     uploaded = st.file_uploader("Drop your PDF here", type=["pdf"], key="home_pdf", help="Choose a PDF or drag it into this upload area.")
-    st.caption("PDF upload · or paste the paper text below")
-    pasted = st.text_area("Paste paper text", height=90, placeholder="Paste the paper text, including its reference list.", label_visibility="collapsed", key="home_pasted")
+    st.caption("Or paste the paper text")
+    pasted = st.text_area("Paste paper text", height=86, placeholder="Paste the paper text, including its reference list.", label_visibility="collapsed", key="home_pasted")
     col1, col2 = st.columns([1, 3], vertical_alignment="center")
     with col1:
         max_claims = st.selectbox("Claims to review", [4, 6, 8, 10], index=2, label_visibility="collapsed")
@@ -647,7 +646,7 @@ def render_empty_state(settings: Settings, llm: LLMClient) -> None:
         if st.button("Research claims", type="primary", use_container_width=True, disabled=(uploaded is None and not pasted.strip())):
             run_analysis(uploaded, pasted, int(max_claims), settings, llm)
             st.rerun()
-    st.caption("Your PDF stays in this session. CiteVerify checks claims against resolved source evidence; it does not replace human review.")
+    st.caption("CiteVerify checks claims against resolved source evidence. It is designed to support human review, not replace it.")
 
 
 
