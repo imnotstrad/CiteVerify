@@ -35,5 +35,9 @@ services:
         value: https://generativelanguage.googleapis.com/v1beta/openai/
       - key: LLM_MODEL
         value: gemini-2.5-flash
+      # The free plan has 512 MB RAM: skip the local Hugging Face model and use the
+      # keyword ranker instead. Set to 1 on a paid plan or when running locally.
+      - key: LOCAL_EMBEDDINGS
+        value: "0"
       - key: CROSSREF_MAILTO
         sync: false

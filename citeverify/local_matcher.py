@@ -7,8 +7,9 @@ small keyword-overlap fallback keeps the verifier usable.
 
 from __future__ import annotations
 
+import os
 import re
-from functools import lru_cache
+import threading
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 _STOP_WORDS = {
@@ -22,12 +23,37 @@ _STOP_WORDS = {
 }
 
 
-@lru_cache(maxsize=1)
-def _load_model():
-    """Load once per process; importing this module never downloads a model."""
-    from sentence_transformers import SentenceTransformer
+_MODEL_LOCK = threading.Lock()
+_model = None
+_model_error: Exception | None = None
 
-    return SentenceTransformer(MODEL_NAME)
+
+def local_embeddings_enabled() -> bool:
+    """Set LOCAL_EMBEDDINGS=0 to skip the model (e.g. on a small free host)."""
+    value = os.getenv("LOCAL_EMBEDDINGS", "1").strip().casefold()
+    return value not in {"0", "false", "no", "off"}
+
+
+def _load_model():
+    """Load once per process, safely across worker threads.
+
+    Importing this module never downloads a model. If loading fails, the failure is
+    remembered so later claims fall back immediately instead of retrying the download.
+    """
+    global _model, _model_error
+    with _MODEL_LOCK:
+        if _model is not None:
+            return _model
+        if _model_error is not None:
+            raise _model_error
+        try:
+            from sentence_transformers import SentenceTransformer
+
+            _model = SentenceTransformer(MODEL_NAME)
+        except Exception as exc:
+            _model_error = exc
+            raise
+        return _model
 
 
 def _passages(text: str, max_chars: int = 650) -> list[str]:
@@ -91,6 +117,9 @@ def retrieve_passages(
     passages = _passages(source_text)
     if not passages:
         return [], "none"
+
+    if not local_embeddings_enabled():
+        return _keyword_rank(query, passages, top_k), "keyword"
 
     try:
         model = _load_model()

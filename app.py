@@ -294,6 +294,12 @@ def init_state() -> None:
         "doi_query": "",
         "dark_mode": False,
         "claim_index": 0,
+        "stage": "home",  # home | reading
+        "pending": None,
+        "analysis_error": None,
+        "home_error": None,
+        "uploader_nonce": 0,
+        "verify_seconds": None,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -332,64 +338,163 @@ def render_topbar() -> None:
 
 
 
-def run_analysis(
-    uploaded,
-    pasted: str,
-    max_claims: int,
-    settings: Settings,
-    llm: LLMClient,
-) -> None:
-    if uploaded is None and not pasted.strip():
-        st.error("Upload a PDF or paste some paper text first.")
+READING_STEPS = [
+    "Reading the paper",
+    "Extracting claims and references",
+    "Finding the cited sources",
+    "Checking each claim",
+]
+
+
+def friendly_error(exc: Exception) -> str:
+    text = str(exc)
+    if isinstance(exc, (LLMUnavailable, ExtractionError, ValueError)):
+        return text
+    lowered = text.lower()
+    if "401" in lowered or "api key" in lowered or "api_key" in lowered:
+        return (
+            f"{text} Check LLM_API_KEY and LLM_BASE_URL. "
+            "Open 'About, evaluation and diagnostics' on the start screen to see what "
+            "this app actually loaded."
+        )
+    return f"Something went wrong: {text}"
+
+
+def render_steps(slot, current: int, detail: str = "") -> None:
+    items = []
+    for index, label in enumerate(READING_STEPS):
+        if index < current:
+            state, dot = "done", "✓"
+        elif index == current:
+            state, dot = "active", "●"
+        else:
+            state, dot = "", "○"
+        extra = (
+            f'<span class="detail">{html.escape(detail)}</span>'
+            if index == current and detail
+            else ""
+        )
+        items.append(
+            f'<li class="{state}"><span class="dot">{dot}</span>'
+            f"<span>{html.escape(label)}{extra}</span></li>"
+        )
+    slot.markdown(f'<ul class="cv-steps">{"".join(items)}</ul>', unsafe_allow_html=True)
+
+
+def begin_analysis(pending: dict) -> None:
+    st.session_state.pending = pending
+    st.session_state.stage = "reading"
+    st.session_state.analysis_error = None
+    st.session_state.home_error = None
+
+
+def on_file_uploaded() -> None:
+    uploaded = st.session_state.get(f"home_pdf_{st.session_state.uploader_nonce}")
+    if uploaded is None:
+        return
+    begin_analysis(
+        {
+            "kind": "file",
+            "name": uploaded.name,
+            "data": uploaded.getvalue(),
+            "max_claims": int(st.session_state.get("max_claims_opt", 8)),
+        }
+    )
+
+
+def on_analyze_text() -> None:
+    text = st.session_state.get("home_pasted", "")
+    if not text.strip():
+        st.session_state.home_error = "Paste some paper text first."
+        return
+    begin_analysis(
+        {"kind": "text", "text": text, "max_claims": int(st.session_state.get("max_claims_opt", 8))}
+    )
+
+
+def on_open_demo() -> None:
+    try:
+        demo = load_demo_report(get_settings().demo_report_path)
+    except Exception as exc:  # missing demo file
+        st.session_state.home_error = str(exc)
+        return
+    st.session_state.report = demo
+    st.session_state.report_mode = "demo"
+    st.session_state.claim_index = 0
+    st.session_state.verify_seconds = None
+    st.session_state.home_error = None
+
+
+def go_home() -> None:
+    """Back to the start screen. Bumping the nonce empties the upload box."""
+    st.session_state.report = None
+    st.session_state.live_report = None
+    st.session_state.report_mode = None
+    st.session_state.claim_index = 0
+    st.session_state.verify_seconds = None
+    st.session_state.stage = "home"
+    st.session_state.pending = None
+    st.session_state.analysis_error = None
+    st.session_state.home_error = None
+    st.session_state.uploader_nonce += 1
+
+
+def analyze_pending(pending: dict, settings: Settings, llm: LLMClient, slot) -> Report:
+    max_claims = int(pending.get("max_claims", 8))
+
+    render_steps(slot, 0)
+    if pending["kind"] == "file":
+        paper = extract_pdf(pending["data"], pending["name"])
+    else:
+        paper = extract_text(pending["text"], filename="pasted-text.txt")
+
+    render_steps(slot, 1, f"“{paper.title}” · {len(paper.pages)} page(s)")
+    title, claims, references = extract_claims_and_references(
+        paper, llm, max_claims=max_claims
+    )
+
+    render_steps(slot, 2, f"{len(claims)} claims, {len(references)} references")
+    references = resolve_all(references, settings)
+    resolved = sum(1 for ref in references if ref.resolved)
+
+    render_steps(slot, 3, f"Matched {resolved} of {len(references)} references")
+
+    def progress(done: int, total: int, _claim) -> None:
+        render_steps(slot, 3, f"Checked {done} of {total} claims")
+
+    started = time.perf_counter()
+    results = verify_claims(claims, references, llm, progress=progress)
+    st.session_state.verify_seconds = time.perf_counter() - started
+    render_steps(slot, len(READING_STEPS))
+    return build_report(title, paper.filename, results, mode="live")
+
+
+def render_reading(settings: Settings, llm: LLMClient) -> None:
+    render_header("Reading & extracting claims", "This usually takes under a minute.", "Working on it")
+    error = st.session_state.analysis_error
+    if error:
+        st.error(error)
+        st.button("← Try another paper", key="retry_home", type="primary", on_click=go_home)
         return
 
-    with st.status("Analyzing paper…", expanded=True) as status:
-        try:
-            st.write("Reading the paper…")
-            if uploaded is not None:
-                paper = extract_pdf(uploaded.getvalue(), uploaded.name)
-            else:
-                paper = extract_text(pasted, filename="pasted-text.txt")
-            st.write(f"Loaded **{paper.title}** ({len(paper.pages)} page(s)).")
+    slot = st.empty()
+    render_steps(slot, 0)
+    st.button("Cancel", key="cancel_analysis", on_click=go_home)
 
-            st.write("Extracting cited claims and references…")
-            title, claims, references = extract_claims_and_references(
-                paper, llm, max_claims=max_claims
-            )
-            st.write(
-                f"Found {len(claims)} cited claims and {len(references)} references."
-            )
+    try:
+        report = analyze_pending(st.session_state.pending, settings, llm, slot)
+    except Exception as exc:
+        st.session_state.analysis_error = friendly_error(exc)
+        st.rerun()
+        return
 
-            st.write("Resolving sources through Crossref and OpenAlex…")
-            references = resolve_all(references, settings)
-            resolved = sum(1 for ref in references if ref.resolved)
-            st.write(f"Resolved {resolved}/{len(references)} references.")
-
-            st.write("Verifying claims against the source text…")
-            verification_started = time.perf_counter()
-            results = verify_claims(claims, references, llm)
-            verification_seconds = time.perf_counter() - verification_started
-            st.write(f"Verification finished in **{verification_seconds:.1f} seconds**.")
-            if verification_seconds > 60:
-                st.warning(
-                    "Verification exceeded the 60-second target. API latency or "
-                    "rate limiting may be the cause."
-                )
-            report = build_report(title, paper.filename, results, mode="live")
-            st.session_state.report = report
-            st.session_state.live_report = report
-            st.session_state.report_mode = "live"
-            st.session_state.claim_index = 0
-            status.update(label="Analysis complete", state="complete")
-        except LLMUnavailable as exc:
-            status.update(label="Analysis needs an LLM key", state="error")
-            st.error(str(exc))
-        except (ExtractionError, ValueError) as exc:
-            status.update(label="Could not extract claims", state="error")
-            st.error(str(exc))
-        except Exception as exc:
-            status.update(label="Analysis failed", state="error")
-            st.error(f"Something went wrong: {exc}")
+    st.session_state.report = report
+    st.session_state.live_report = report
+    st.session_state.report_mode = "live"
+    st.session_state.claim_index = 0
+    st.session_state.stage = "home"
+    st.session_state.pending = None
+    st.rerun()
 
 
 def render_header(title: str, subtitle: str, kicker: str = "Citation forensics") -> None:
@@ -698,7 +803,20 @@ def render_report(report: Report, settings: Settings, llm: LLMClient) -> None:
     shown = report.results
     if not shown:
         st.info("No claims were extracted from this paper.")
+        st.button("Try a new PDF", key="new_pdf_empty", type="primary", on_click=go_home)
         return
+
+    chips = "".join(
+        f'<span class="verdict-badge verdict-{VERDICT_CLASS[verdict]}">'
+        f"{report.summary.get(verdict.value, 0)} {html.escape(VERDICT_LABELS[verdict])}</span>"
+        for verdict in Verdict
+        if report.summary.get(verdict.value, 0) > 0
+    )
+    st.markdown(f'<div class="cv-chips">{chips}</div>', unsafe_allow_html=True)
+    seconds = st.session_state.get("verify_seconds")
+    if seconds is not None:
+        st.caption(f"Verification finished in {seconds:.1f} seconds.")
+
     current_index = min(max(0, int(st.session_state.get("claim_index", 0))), len(shown)-1)
     render_claim(shown[current_index], current_index+1, len(shown), settings, llm)
 
@@ -719,25 +837,15 @@ def render_report(report: Report, settings: Settings, llm: LLMClient) -> None:
         st.rerun()
     st.progress((current_index+1)/len(shown))
 
+    st.button(
+        "Try a new PDF",
+        key=f"new_pdf_{current_index}",
+        on_click=go_home,
+        help="Start over with another paper",
+    )
+
     if current_index == len(shown) - 1:
         render_export(report)
-
-    st.divider()
-    st.markdown("**Finished reviewing?**")
-    c1, c2 = st.columns([1, 2], vertical_alignment="bottom")
-    with c1:
-        if st.button("Start over", key="start_over", use_container_width=True):
-            st.session_state.report = None
-            st.session_state.live_report = None
-            st.session_state.report_mode = None
-            st.session_state.claim_index = 0
-            st.rerun()
-    with c2:
-        new_pdf = st.file_uploader("Upload a new PDF", type=["pdf"], key="new_report_pdf")
-        if st.button("Analyze new PDF", key="analyze_new_pdf", type="primary", disabled=new_pdf is None, use_container_width=True):
-            run_analysis(new_pdf, "", 8, settings, llm)
-            st.rerun()
-
 
 
 def render_evaluation(settings: Settings) -> None:
@@ -861,19 +969,70 @@ def render_deployment_diagnostics(settings: Settings) -> None:
 
 
 def render_empty_state(settings: Settings, llm: LLMClient) -> None:
-    st.markdown('<div style="text-align:center;padding:4vh 0 1.5vh;color:var(--cv-muted);">Drop a research paper into the upload area to begin.</div>', unsafe_allow_html=True)
-    uploaded = st.file_uploader("Drop your PDF here", type=["pdf"], key="home_pdf", help="Choose a PDF or drag it into this upload area.")
-    st.caption("Or paste the paper text")
-    pasted = st.text_area("Paste paper text", height=86, placeholder="Paste the paper text, including its reference list.", label_visibility="collapsed", key="home_pasted")
+    render_header(
+        "Drop a paper. See which claims its sources support.",
+        "Drop a PDF anywhere in the box below, or paste the text.",
+    )
+    if st.session_state.home_error:
+        st.error(st.session_state.home_error)
+    if not settings.llm_configured:
+        st.warning(
+            "No LLM_API_KEY is configured, so new papers can't be analyzed yet. "
+            "You can still explore the demo report."
+        )
+
+    st.file_uploader(
+        "Drop your PDF here",
+        type=["pdf"],
+        key=f"home_pdf_{st.session_state.uploader_nonce}",
+        on_change=on_file_uploaded,
+        help="Choose a PDF or drag it into this upload area. Analysis starts right away.",
+    )
+    st.markdown('<div class="cv-or">or paste text</div>', unsafe_allow_html=True)
+    st.text_area(
+        "Paste paper text",
+        height=110,
+        placeholder="Paste the paper text, including its reference list.",
+        label_visibility="collapsed",
+        key="home_pasted",
+    )
     col1, col2 = st.columns([1, 3], vertical_alignment="center")
     with col1:
-        max_claims = st.slider("Claims to review", min_value=4, max_value=10, value=8, step=2)
+        st.select_slider(
+            "Claims to review", options=[4, 6, 8, 10], value=8, key="max_claims_opt"
+        )
     with col2:
-        if st.button("Research claims", type="primary", use_container_width=True, disabled=(uploaded is None and not pasted.strip())):
-            run_analysis(uploaded, pasted, int(max_claims), settings, llm)
-            st.rerun()
+        st.button(
+            "Research claims",
+            type="primary",
+            use_container_width=True,
+            on_click=on_analyze_text,
+            key="analyze_text",
+        )
+    st.button("Try the demo report (no key needed)", key="open_demo", on_click=on_open_demo)
     st.caption("CiteVerify checks claims against resolved source evidence. It is designed to support human review, not replace it.")
 
+    with st.expander("About, evaluation and diagnostics"):
+        render_about(settings)
+
+
+EXTRA_CSS = """
+<style>
+.cv-or {text-align:center;color:var(--cv-muted)!important;font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;margin:.9rem 0 .4rem;}
+.cv-chips {display:flex;flex-wrap:wrap;gap:.4rem;margin:.1rem 0 .8rem;}
+.cv-steps {list-style:none;padding:0;margin:.6rem 0 .8rem;}
+.cv-steps li {display:flex;gap:.75rem;align-items:baseline;padding:.6rem 0;color:var(--cv-muted);border-bottom:1px solid var(--cv-border);}
+.cv-steps li .dot {width:1.3rem;text-align:center;font-weight:700;}
+.cv-steps li.done {color:var(--cv-text);}
+.cv-steps li.done .dot {color:var(--cv-accent);}
+.cv-steps li.active {color:var(--cv-text);font-weight:600;}
+.cv-steps li.active .dot {color:var(--cv-accent);animation:cvpulse 1s ease-in-out infinite;}
+.cv-steps .detail {color:var(--cv-muted);font-weight:400;font-size:.85rem;display:block;}
+@keyframes cvpulse {0%,100%{opacity:.25;}50%{opacity:1;}}
+[data-testid="stFileUploaderDropzone"] {padding:2.2rem 1.5rem!important;}
+.stButton>button:disabled {background:var(--cv-panel-alt)!important;cursor:not-allowed;}
+</style>
+"""
 
 
 def main() -> None:
@@ -885,14 +1044,19 @@ def main() -> None:
     )
     init_state()
     inject_css(dark=st.session_state.get("dark_mode", False))
+    st.markdown(EXTRA_CSS, unsafe_allow_html=True)
     settings = get_settings()
     llm = LLMClient(settings)
     render_topbar()
     report = st.session_state.get("report")
-    if report is None:
+    if report is None and st.session_state.stage == "reading" and st.session_state.pending is not None:
+        render_reading(settings, llm)
+    elif report is None:
+        st.session_state.stage = "home"
         render_empty_state(settings, llm)
     else:
         render_report(report, settings, llm)
+
 
 if __name__ == "__main__":
     main()
