@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import html
 import json
+import time
 
 import streamlit as st
 
@@ -257,7 +258,15 @@ def run_analysis(
             st.write(f"Resolved {resolved}/{len(references)} references.")
 
             st.write("Verifying claims against the source text…")
+            verification_started = time.perf_counter()
             results = verify_claims(claims, references, llm)
+            verification_seconds = time.perf_counter() - verification_started
+            st.write(f"Verification finished in **{verification_seconds:.1f} seconds**.")
+            if verification_seconds > 60:
+                st.warning(
+                    "Verification exceeded the 60-second target. API latency or "
+                    "rate limiting may be the cause."
+                )
             report = build_report(title, paper.filename, results, mode="live")
             st.session_state.report = report
             st.session_state.live_report = report
@@ -563,8 +572,8 @@ def render_about(settings: Settings) -> None:
         )
         st.markdown("#### Stack")
         st.caption(
-            "Python · Streamlit · PyMuPDF · Crossref · OpenAlex · Pydantic · "
-            "one source-grounded LLM call per claim"
+            "Python · Streamlit · PyMuPDF · Hugging Face sentence-transformers · "
+            "Crossref · OpenAlex · Pydantic · Gemini source-grounded verification"
         )
     st.divider()
     render_deployment_diagnostics(settings)

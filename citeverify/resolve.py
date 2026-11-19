@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
 from urllib.parse import quote, urlencode
 
@@ -241,17 +242,30 @@ def resolve_all(
     settings: Settings,
     progress: Callable[[int, int, Reference], None] | None = None,
 ) -> list[Reference]:
-    resolved: list[Reference] = []
+    if not references:
+        return []
+
+    # Resolve a small batch concurrently to overlap network latency while
+    # staying conservative with Crossref/OpenAlex public API limits.
     total = len(references)
-    for index, reference in enumerate(references, start=1):
-        try:
-            item = resolve_reference(reference, settings)
-        except Exception:
-            item = reference.model_copy(update={"resolved": False})
-        resolved.append(item)
-        if progress:
-            progress(index, total, item)
-    return resolved
+    ordered: list[Reference | None] = [None] * total
+    with ThreadPoolExecutor(max_workers=min(3, total)) as pool:
+        futures = {
+            pool.submit(resolve_reference, reference, settings): (index, reference)
+            for index, reference in enumerate(references)
+        }
+        completed = 0
+        for future in as_completed(futures):
+            index, reference = futures[future]
+            try:
+                ordered[index] = future.result()
+            except Exception:
+                ordered[index] = reference.model_copy(update={"resolved": False})
+            completed += 1
+            if progress:
+                progress(completed, total, ordered[index])
+
+    return [item for item in ordered if item is not None]
 
 
 def check_doi(value: str, settings: Settings) -> Reference:
