@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from .doi import doi_url
 from .llm import LLMClient
+from .local_matcher import retrieve_passages
 from .models import (
     FLAG_MISSING_DOI,
     FLAG_NO_ABSTRACT,
@@ -166,11 +167,14 @@ def verify_claim(
             _flags(*base_flags, FLAG_NO_ABSTRACT),
         )
 
+    # Local embeddings rank passages; Gemini remains responsible for the verdict.
+    passages, retrieval_method = retrieve_passages(claim.text, source_text, top_k=4)
+    evidence_text = "\n\n".join(passages) if passages else source_text
     prompt = VERIFICATION_PROMPT.format(
         claim=claim.text,
         marker=claim.citation_marker,
         source_title=reference.title or "Unknown source",
-        source_text=source_text,
+        source_text=evidence_text,
     )
 
     try:
@@ -181,7 +185,7 @@ def verify_claim(
         )
         quote = (payload.evidence_quote or "").strip() or None
         if payload.verdict != Verdict.UNVERIFIABLE and not quote_in_source(
-            quote, source_text
+            quote, evidence_text
         ):
             payload = llm.complete_json(
                 system=SYSTEM_PROMPT,
