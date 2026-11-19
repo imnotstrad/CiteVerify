@@ -74,10 +74,48 @@ The sidebar can check any DOI for retraction status and metadata without an LLM.
 10.1016/S0140-6736(97)11096-0
 ```
 
+## Deploy on Render
+
+`render.yaml` defines the whole service, and `.python-version` pins Python
+3.13.5. Both matter: Render now defaults **new** services to Python 3.14.10,
+where some of these wheels may not exist.
+
+If the service already exists, set these in **Settings** by hand:
+
+| Setting | Value |
+| --- | --- |
+| Language | Python 3 |
+| Build command | `pip install -r requirements.txt` |
+| Start command | `streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --server.fileWatcherType none --server.enableCORS false --server.enableXsrfProtection false --browser.gatherUsageStats false` |
+| Health check path | `/` |
+
+Environment variables (Dashboard → Environment):
+
+| Key | Value |
+| --- | --- |
+| `PYTHON_VERSION` | `3.13.5` |
+| `LLM_API_KEY` | your Gemini key — **secret**, never commit |
+| `LLM_BASE_URL` | `https://generativelanguage.googleapis.com/v1beta/openai/` |
+| `LLM_MODEL` | `gemini-2.5-flash` |
+| `CROSSREF_MAILTO` | your email |
+
+Without `LLM_API_KEY` the deployed app still runs, but only in demo mode.
+The `.env` file is gitignored, so it never reaches Render.
+
+Notes:
+
+- The free plan spins down after inactivity; the first request takes ~30–60s.
+- The filesystem is ephemeral. The `.cache/` directory and uploaded PDFs do
+  not survive a restart or redeploy.
+- Keep `--server.maxUploadSize` low (50 MB) to avoid exhausting the 512 MB
+  free-tier memory limit.
+
 ## Repo layout
 
 ```text
 app.py                     Streamlit UI
+render.yaml                Render blueprint
+.python-version            pinned Python for Render
 citeverify/
   doi.py                   DOI normalization
   ingest.py                PDF/text ingestion
@@ -93,6 +131,7 @@ data/
 scripts/
   make_demo.py             rebuild demo + gold set
   evaluate.py              run the gold-set harness
+  analyze.py               headless CLI pipeline runner
 tests/                     unit tests
 ```
 

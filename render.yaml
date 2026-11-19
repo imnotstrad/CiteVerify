@@ -1,0 +1,39 @@
+# Render blueprint for CiteVerify.
+#
+# Deploy: Dashboard -> New -> Blueprint -> pick this repo.
+# The LLM_API_KEY and CROSSREF_MAILTO values are prompted for at creation time
+# because they are secrets; they must never be committed.
+services:
+  - type: web
+    name: citeverify
+    runtime: python
+    plan: free
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /
+    # Render defaults new services to Python 3.14.10 (since 2026-11-03).
+    # Pin 3.13.5 to match the version the project is developed and tested on.
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: >-
+      streamlit run app.py
+      --server.port $PORT
+      --server.address 0.0.0.0
+      --server.headless true
+      --server.fileWatcherType none
+      --server.maxUploadSize 50
+      --server.enableCORS false
+      --server.enableXsrfProtection false
+      --browser.gatherUsageStats false
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.5
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_BASE_URL
+        value: https://generativelanguage.googleapis.com/v1beta/openai/
+      - key: LLM_MODEL
+        value: gemini-2.5-flash
+      - key: CROSSREF_MAILTO
+        sync: false
