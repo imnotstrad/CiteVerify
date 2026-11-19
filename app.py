@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import html
 import json
+import time
 
 import streamlit as st
 
@@ -17,7 +18,7 @@ from citeverify.evidence import find_evidence, highlight
 from citeverify.extract import ExtractionError, extract_claims_and_references
 from citeverify.ingest import extract_pdf, extract_text
 from citeverify.llm import LLMClient, LLMUnavailable
-from citeverify.models import ClaimResult, Confidence, Report, Verdict
+from citeverify.models import ClaimResult, Confidence, Reference, Report, Verdict
 from citeverify.report import (
     CONFIDENCE_LABELS,
     VERDICT_LABELS,
@@ -28,7 +29,7 @@ from citeverify.report import (
 )
 from citeverify.reliability import reliability_for_reference
 from citeverify.resolve import ResolutionError, check_doi, resolve_all
-from citeverify.verify import verify_claims
+from citeverify.verify import verify_claim, verify_claims
 
 VERDICT_CLASS = {
     Verdict.SUPPORTED: "supported",
@@ -50,48 +51,75 @@ SUMMARY_SPECS = [
 DEMO_RETRACTED_DOI = "10.1016/S0140-6736(97)11096-0"
 
 
-def inject_css() -> None:
+def inject_css(dark: bool = False) -> None:
+    palette = {
+        "bg": "#10191F" if dark else "#F7F3EA",
+        "panel": "#19262D" if dark else "#FFFDF7",
+        "sidebar": "#142129" if dark else "#EFE8DA",
+        "text": "#E8F0F1" if dark else "#172026",
+        "muted": "#A4B4BA" if dark else "#5B6570",
+        "border": "#34464D" if dark else "#E4DACB",
+        "accent": "#63C6B6" if dark else "#0F766E",
+        "soft": "#20343A" if dark else "#F0FDFA",
+        "soft_text": "#D3ECE7" if dark else "#134E4A",
+    }
     st.markdown(
-        """
+        f"""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap');
-        html, body, [class*="css"] { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-        .stApp { background: #F7F3EA; }
-        .block-container { padding-top: 3.4rem; padding-bottom: 4rem; max-width: 1180px; }
-        h1, h2, h3 { font-family: 'Source Serif 4', Georgia, serif; color: #172026; }
-        [data-testid="stSidebar"] { background: #EFE8DA; border-right: 1px solid #DED3C0; }
-        [data-testid="stSidebar"] * { color: #24303A; }
-        .cv-brand { font-family: 'Source Serif 4', Georgia, serif; font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; }
-        .cv-tag { color: #6B5B47; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.12em; }
-        .cv-hero { border-bottom: 1px solid #DED3C0; padding-bottom: 1rem; margin-bottom: 1.1rem; }
-        .cv-kicker { color: #0F766E; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
-        .cv-title { font-family: 'Source Serif 4', Georgia, serif; font-size: 2.25rem; line-height: 1.12; color: #172026; margin: 0.15rem 0 0.35rem; }
-        .cv-sub { color: #5B6570; font-size: 1rem; }
-        .summary-card { background: #FFFDF7; border: 1px solid #E4DACB; border-radius: 12px; padding: 0.7rem 0.85rem; min-height: 5.2rem; }
-        .summary-value { font-family: 'Source Serif 4', Georgia, serif; font-size: 1.65rem; font-weight: 700; line-height: 1; color: #172026; }
-        .summary-label { color: #6B5B47; font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.3rem; white-space: nowrap; }
-        .summary-card.supported { border-top: 4px solid #15803D; }
-        .summary-card.partially_supported { border-top: 4px solid #B45309; }
-        .summary-card.unsupported { border-top: 4px solid #C2410C; }
-        .summary-card.contradicted { border-top: 4px solid #B91C1C; }
-        .summary-card.unverifiable { border-top: 4px solid #6B7280; }
-        .summary-card.total { border-top: 4px solid #0F766E; }
-        .verdict-badge { display: inline-block; padding: 0.26rem 0.58rem; border-radius: 999px; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
-        .verdict-supported { background: #DCFCE7; color: #166534; }
-        .verdict-partially_supported { background: #FEF3C7; color: #92400E; }
-        .verdict-unsupported { background: #FFEDD5; color: #9A3412; }
-        .verdict-contradicted { background: #FEE2E2; color: #991B1B; }
-        .verdict-unverifiable { background: #E5E7EB; color: #374151; }
-        .confidence-note { color: #6B5B47; font-size: 0.76rem; margin-top: 0.2rem; }
-        .quote { border-left: 3px solid #0F766E; padding: 0.45rem 0.8rem; background: #F0FDFA; color: #134E4A; font-style: italic; margin: 0.25rem 0 0.5rem; }
-        .source-line { color: #5B6570; font-size: 0.82rem; margin-bottom: 0.4rem; }
-        .hl-passage { background: #FFFDF7; border: 1px solid #E4DACB; border-radius: 10px; padding: 0.6rem 0.8rem; margin: 0.3rem 0 0.6rem; line-height: 1.55; }
-        .hl-passage mark { background: #FFF3A3; padding: 0 2px; border-radius: 3px; }
-        .hl-passage .best { background: #FFE082; padding: 2px 3px; border-radius: 4px; }
-        [data-testid="stVerticalBlockBorderWrapper"] { background: #FFFDF7; border-color: #E4DACB; border-radius: 14px; }
-        .stButton > button { border-radius: 9px; }
-        .stDownloadButton > button { border-radius: 9px; }
-        .small-muted { color: #6B5B47; font-size: 0.82rem; }
+        :root {{
+          --cv-bg: {palette["bg"]};
+          --cv-panel: {palette["panel"]};
+          --cv-sidebar: {palette["sidebar"]};
+          --cv-text: {palette["text"]};
+          --cv-muted: {palette["muted"]};
+          --cv-border: {palette["border"]};
+          --cv-accent: {palette["accent"]};
+          --cv-soft: {palette["soft"]};
+          --cv-soft-text: {palette["soft_text"]};
+        }}
+        html, body, [class*="css"] {{ font-family: 'Inter', system-ui, -apple-system, sans-serif; }}
+        .stApp, [data-testid="stAppViewContainer"] {{ background: var(--cv-bg); color: var(--cv-text); }}
+        .block-container {{ padding-top: 2.5rem; padding-bottom: 4rem; max-width: 1120px; }}
+        h1, h2, h3, p, label, [data-testid="stMarkdownContainer"] {{ color: var(--cv-text); }}
+        h1, h2, h3 {{ font-family: 'Source Serif 4', Georgia, serif; }}
+        [data-testid="stSidebar"] {{ background: var(--cv-sidebar); border-right: 1px solid var(--cv-border); }}
+        [data-testid="stSidebar"] * {{ color: var(--cv-text); }}
+        .cv-brand {{ font-family: 'Source Serif 4', Georgia, serif; font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; color: var(--cv-text); }}
+        .cv-tag {{ color: var(--cv-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; }}
+        .cv-hero {{ border-bottom: 1px solid var(--cv-border); padding-bottom: 1rem; margin-bottom: 1.1rem; }}
+        .cv-kicker {{ color: var(--cv-accent); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }}
+        .cv-title {{ font-family: 'Source Serif 4', Georgia, serif; font-size: 2.3rem; line-height: 1.12; color: var(--cv-text); margin: 0.15rem 0 0.35rem; }}
+        .cv-sub {{ color: var(--cv-muted); font-size: 1rem; }}
+        .summary-card {{ background: var(--cv-panel); border: 1px solid var(--cv-border); border-radius: 14px; padding: 0.8rem 0.9rem; min-height: 5.2rem; }}
+        .summary-value {{ font-family: 'Source Serif 4', Georgia, serif; font-size: 1.75rem; font-weight: 700; line-height: 1; color: var(--cv-text); }}
+        .summary-label {{ color: var(--cv-muted); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.38rem; }}
+        .summary-card.supported {{ border-top: 4px solid #15803D; }}
+        .summary-card.partially_supported {{ border-top: 4px solid #B45309; }}
+        .summary-card.unsupported {{ border-top: 4px solid #C2410C; }}
+        .summary-card.contradicted {{ border-top: 4px solid #B91C1C; }}
+        .summary-card.unverifiable {{ border-top: 4px solid #6B7280; }}
+        .summary-card.total {{ border-top: 4px solid var(--cv-accent); }}
+        .claim-card-title {{ font-family: 'Source Serif 4', Georgia, serif; font-size: 1.45rem; font-weight: 600; line-height: 1.45; color: var(--cv-text); margin: 0.5rem 0 1rem; }}
+        .claim-card-eyebrow {{ color: var(--cv-muted); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }}
+        .verdict-badge {{ display: inline-block; padding: 0.32rem 0.72rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }}
+        .verdict-supported {{ background: #DCFCE7; color: #166534; }}
+        .verdict-partially_supported {{ background: #FEF3C7; color: #92400E; }}
+        .verdict-unsupported {{ background: #FFEDD5; color: #9A3412; }}
+        .verdict-contradicted {{ background: #FEE2E2; color: #991B1B; }}
+        .verdict-unverifiable {{ background: #E5E7EB; color: #374151; }}
+        .confidence-note {{ color: var(--cv-muted); font-size: 0.78rem; margin-top: 0.45rem; }}
+        .quote {{ border-left: 3px solid var(--cv-accent); padding: 0.8rem 1rem; background: var(--cv-soft); color: var(--cv-soft-text); font-style: italic; margin: 0.35rem 0 0.75rem; border-radius: 0 10px 10px 0; line-height: 1.6; }}
+        .source-line {{ color: var(--cv-muted); font-size: 0.85rem; margin: 0.35rem 0 0.8rem; }}
+        .hl-passage {{ background: var(--cv-panel); border: 1px solid var(--cv-border); border-radius: 10px; padding: 0.7rem 0.85rem; margin: 0.3rem 0 0.6rem; line-height: 1.55; }}
+        .hl-passage mark {{ background: #FFF3A3; color: #172026; padding: 0 2px; border-radius: 3px; }}
+        .hl-passage .best {{ background: #FFE082; color: #172026; padding: 2px 3px; border-radius: 4px; }}
+        [data-testid="stVerticalBlockBorderWrapper"] {{ background: var(--cv-panel); border-color: var(--cv-border); border-radius: 18px; }}
+        .stButton > button, .stDownloadButton > button {{ border-radius: 10px; border: 1px solid var(--cv-border); min-height: 2.7rem; }}
+        .stButton > button:disabled {{ color: var(--cv-muted) !important; opacity: 0.42; cursor: not-allowed; }}
+        [data-baseweb="input"] > div, [data-baseweb="textarea"] > div, [data-baseweb="select"] > div {{ background: var(--cv-panel); border-color: var(--cv-border); }}
+        input, textarea {{ color: var(--cv-text) !important; }}
+        .small-muted {{ color: var(--cv-muted); font-size: 0.82rem; }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -105,6 +133,8 @@ def init_state() -> None:
         "live_report": None,
         "doi_result": None,
         "doi_query": "",
+        "dark_mode": False,
+        "claim_index": 0,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -128,6 +158,7 @@ def render_sidebar(settings: Settings, llm: LLMClient):
             '<div class="cv-tag">Evidence, not verdicts</div>',
             unsafe_allow_html=True,
         )
+        st.toggle("Dark mode", key="dark_mode", help="Switch between light and dark appearance.")
         st.write("")
         mode = st.radio(
             "Mode",
@@ -257,11 +288,20 @@ def run_analysis(
             st.write(f"Resolved {resolved}/{len(references)} references.")
 
             st.write("Verifying claims against the source text…")
+            verification_started = time.perf_counter()
             results = verify_claims(claims, references, llm)
+            verification_seconds = time.perf_counter() - verification_started
+            st.write(f"Verification finished in **{verification_seconds:.1f} seconds**.")
+            if verification_seconds > 60:
+                st.warning(
+                    "Verification exceeded the 60-second target. API latency or "
+                    "rate limiting may be the cause."
+                )
             report = build_report(title, paper.filename, results, mode="live")
             st.session_state.report = report
             st.session_state.live_report = report
             st.session_state.report_mode = "live"
+            st.session_state.claim_index = 0
             status.update(label="Analysis complete", state="complete")
         except LLMUnavailable as exc:
             status.update(label="Analysis needs an LLM key", state="error")
@@ -362,28 +402,40 @@ def render_citation_fix(reference) -> None:
     st.markdown(f"Suggested: {fixed['corrected']}")
 
 
-def render_claim(result: ClaimResult, index: int) -> None:
+def render_claim(
+    result: ClaimResult,
+    index: int,
+    total: int,
+    settings: Settings,
+    llm: LLMClient,
+) -> None:
     with st.container(border=True):
-        top_left, top_right = st.columns([5, 2])
-        with top_left:
-            st.caption(
-                f"Claim {index}  ·  {result.claim.section}  ·  "
-                f"{result.claim.citation_marker or 'citation not mapped'}"
+        left, right = st.columns([5, 2])
+        with left:
+            st.markdown(
+                f'<div class="claim-card-eyebrow">Claim {index} of {total} · '
+                f'{html.escape(result.claim.section)} · '
+                f'{html.escape(result.claim.citation_marker or "Citation not mapped")}</div>',
+                unsafe_allow_html=True,
             )
-            st.markdown(f"**{result.claim.text}**")
-        with top_right:
+        with right:
             st.markdown(verdict_badge(result), unsafe_allow_html=True)
             st.markdown(
                 f'<div class="confidence-note">Confidence: '
-                f"{html.escape(confidence_label(result))}</div>",
+                f'{html.escape(confidence_label(result))}</div>',
                 unsafe_allow_html=True,
             )
+
+        st.markdown(
+            f'<div class="claim-card-title">{html.escape(result.claim.text)}</div>',
+            unsafe_allow_html=True,
+        )
 
         source_title = result.source_title or "Unknown source"
         source_year = f" ({result.source_year})" if result.source_year else ""
         st.markdown(
-            f'<div class="source-line">Source: {html.escape(source_title)}'
-            f"{html.escape(source_year)}</div>",
+            f'<div class="source-line">Cited source: {html.escape(source_title)}'
+            f'{html.escape(source_year)}</div>',
             unsafe_allow_html=True,
         )
 
@@ -401,34 +453,94 @@ def render_claim(result: ClaimResult, index: int) -> None:
                 unsafe_allow_html=True,
             )
         else:
-            st.caption("No verbatim quote. The claim is marked unverifiable by design.")
-
-        render_highlighted_evidence(result)
+            st.caption("No verbatim quote was found. This claim is marked unverifiable.")
 
         if result.reason:
-            st.markdown(f"**Why:** {result.reason}")
+            st.markdown("**Why this verdict?**")
+            st.write(result.reason)
         if result.suggested_fix:
             st.info(f"**Suggested fix:** {result.suggested_fix}")
+
+        render_highlighted_evidence(result)
 
         action_left, action_right = st.columns([3, 2])
         with action_left:
             if result.source_url:
-                st.markdown(f"[Open source ↗]({result.source_url})")
+                st.markdown(f"[Open cited source ↗]({result.source_url})")
             elif result.reference and result.reference.doi:
-                st.markdown(f"[Open source ↗](https://doi.org/{result.reference.doi})")
+                st.markdown(f"[Open cited source ↗](https://doi.org/{result.reference.doi})")
             else:
                 st.caption("No source link available.")
         with action_right:
             st.checkbox(
                 "Reviewed",
                 key=f"reviewed_{result.claim.id}",
-                help="A human-review marker for the demo. It is not persisted.",
+                help="A human-review marker for this session.",
             )
+
+        with st.expander("Try this claim against another PDF"):
+            st.caption(
+                "Upload a separate source document. CiteVerify will re-check only "
+                "this claim against the uploaded PDF and replace its displayed result."
+            )
+            alternate_pdf = st.file_uploader(
+                "Alternative source PDF",
+                type=["pdf"],
+                key=f"alternate_source_{result.claim.id}",
+            )
+            if st.button(
+                "Verify claim against uploaded PDF",
+                key=f"verify_alternate_{result.claim.id}",
+                disabled=alternate_pdf is None,
+                type="secondary",
+            ):
+                try:
+                    with st.spinner("Checking this claim against the new PDF…"):
+                        alternate_paper = extract_pdf(
+                            alternate_pdf.getvalue(), alternate_pdf.name
+                        )
+                        alternate_text = alternate_paper.full_text.strip()
+                        if len(alternate_text) < 80:
+                            st.error("The uploaded PDF does not contain enough extractable text.")
+                        else:
+                            alternate_reference = Reference(
+                                id=f"alternate_{result.claim.id}",
+                                raw=alternate_pdf.name,
+                                title=alternate_paper.title or alternate_pdf.name,
+                                abstract=alternate_text[:30000],
+                                resolved=True,
+                                provider="user-uploaded PDF",
+                            )
+                            alternate_result = verify_claim(
+                                result.claim, alternate_reference, llm
+                            )
+                            current_report = st.session_state.report
+                            revised_results = list(current_report.results)
+                            original_index = next(
+                                (
+                                    position
+                                    for position, item in enumerate(revised_results)
+                                    if item.claim.id == result.claim.id
+                                ),
+                                None,
+                            )
+                            if original_index is not None:
+                                revised_results[original_index] = alternate_result
+                                updated_report = current_report.model_copy(
+                                    update={"results": revised_results}
+                                )
+                                st.session_state.report = updated_report
+                                if st.session_state.report_mode == "live":
+                                    st.session_state.live_report = updated_report
+                                st.success("This claim has been re-checked against the uploaded PDF.")
+                                st.rerun()
+                except Exception as exc:
+                    st.error(f"Could not verify against that PDF: {exc}")
 
         with st.expander("Source metadata and reference"):
             reference = result.reference
             if reference is None:
-                st.caption("No reference matched.")
+                st.caption("No matched source metadata.")
             else:
                 if reference.title:
                     st.write(f"**Title:** {reference.title}")
@@ -441,41 +553,91 @@ def render_claim(result: ClaimResult, index: int) -> None:
                 if reference.provider:
                     st.write(f"**Provider:** {reference.provider}")
                 st.caption(reference.raw or "No raw reference text.")
-                render_reliability(reference)
-                render_citation_fix(reference)
+                if reference.provider != "user-uploaded PDF":
+                    render_reliability(reference)
+                    render_citation_fix(reference)
 
 
-def render_report(report: Report, settings: Settings) -> None:
+def render_report(
+    report: Report,
+    settings: Settings,
+    llm: LLMClient,
+) -> None:
     render_header(
         report.paper_title,
-        "Claims checked against the cited sources. Every verdict needs evidence.",
+        "One claim at a time. Review the evidence, verdict, and suggested correction.",
         kicker="CiteVerify report",
     )
     if report.mode == "demo":
         st.info(
             "**Demo report.** The citing paper is illustrative; the cited papers and "
-            "their abstracts are real. Upload your own paper to run the live pipeline."
+            "their abstracts are real. Upload your own paper to run a live analysis."
         )
 
     render_summary(report)
 
-    report_tab, eval_tab, about_tab = st.tabs(["Report", "Evaluation", "About"])
+    report_tab, eval_tab, about_tab = st.tabs(["Claims", "Evaluation", "About"])
     with report_tab:
         options = [verdict.value for verdict in Verdict]
         selected = st.multiselect(
-            "Filter by verdict",
+            "Filter claims by verdict",
             options=options,
             format_func=lambda value: VERDICT_LABELS[Verdict(value)],
             default=[],
-            placeholder="All verdicts",
+            placeholder="All claims",
         )
         shown = report.results
         if selected:
             shown = [result for result in report.results if result.verdict.value in selected]
+
         if not shown:
             st.caption("No claims match that filter.")
-        for index, result in enumerate(shown, start=1):
-            render_claim(result, index)
+        else:
+            current_index = min(
+                max(0, int(st.session_state.get("claim_index", 0))),
+                len(shown) - 1,
+            )
+            nav_left, nav_middle, nav_right = st.columns([1, 2, 1])
+            with nav_left:
+                previous_clicked = st.button(
+                    "← Previous",
+                    key="previous_claim",
+                    use_container_width=True,
+                    disabled=current_index == 0,
+                )
+            with nav_middle:
+                st.markdown(
+                    f'<div style="text-align:center;padding:.65rem 0;color:var(--cv-muted);'
+                    f'font-weight:700;letter-spacing:.08em;">CLAIM {current_index + 1:02d} '
+                    f'/ {len(shown):02d}</div>',
+                    unsafe_allow_html=True,
+                )
+            with nav_right:
+                next_clicked = st.button(
+                    "Next →",
+                    key="next_claim",
+                    use_container_width=True,
+                    disabled=current_index == len(shown) - 1,
+                )
+
+            if previous_clicked:
+                current_index = max(0, current_index - 1)
+            elif next_clicked:
+                current_index = min(len(shown) - 1, current_index + 1)
+            st.session_state.claim_index = current_index
+
+            st.progress((current_index + 1) / len(shown))
+            render_claim(
+                shown[current_index],
+                current_index + 1,
+                len(shown),
+                settings,
+                llm,
+            )
+            st.caption(
+                "The left arrow is disabled on the first claim and the right arrow "
+                "is disabled on the last claim."
+            )
 
     with eval_tab:
         render_evaluation(settings)
@@ -658,8 +820,8 @@ def main() -> None:
         layout="wide",
         initial_sidebar_state="expanded",
     )
-    inject_css()
     init_state()
+    inject_css(dark=st.session_state.get("dark_mode", False))
     settings = get_settings()
     llm = LLMClient(settings)
 
@@ -684,7 +846,7 @@ def main() -> None:
     if report is None:
         render_empty_state()
     else:
-        render_report(report, settings)
+        render_report(report, settings, llm)
 
 
 if __name__ == "__main__":
