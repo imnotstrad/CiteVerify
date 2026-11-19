@@ -54,7 +54,7 @@ The live pipeline:
 1. Extracts text and the reference section with PyMuPDF.
 2. Extracts cited claims and references with a structured LLM call.
 3. Resolves DOIs/titles through Crossref and OpenAlex.
-4. Compares each claim only against the retrieved source text.
+4. Uses a local Hugging Face sentence-transformer (`all-MiniLM-L6-v2`) to rank relevant source-abstract passages; Gemini makes the verdict from those excerpts.
 5. Validates the evidence quote and builds the report.
 
 ## Demo and evaluation
@@ -138,6 +138,7 @@ tests/                     unit tests
 ## Limitations
 
 - Abstract-level evidence by default; full-text retrieval is future work.
+- The first live analysis downloads the local embedding model (roughly 90 MB); if it cannot load, keyword retrieval is used as a fallback.
 - Citation-to-reference matching is heuristic.
 - Confidence labels are a rubric, not a calibrated probability.
 - The demo paper is illustrative; the cited sources and abstracts are real.
