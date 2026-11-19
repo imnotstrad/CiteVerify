@@ -55,6 +55,7 @@ def inject_css(dark: bool = False) -> None:
     palette = {
         "bg": "#10191F" if dark else "#F7F3EA",
         "panel": "#19262D" if dark else "#FFFDF7",
+        "panel_alt": "#22343C" if dark else "#F0EBE1",
         "text": "#E8F0F1" if dark else "#172026",
         "muted": "#A4B4BA" if dark else "#5B6570",
         "border": "#34464D" if dark else "#E4DACB",
@@ -62,6 +63,16 @@ def inject_css(dark: bool = False) -> None:
         "soft": "#20343A" if dark else "#F0FDFA",
         "soft_text": "#D3ECE7" if dark else "#134E4A",
         "input": "#142129" if dark else "#FFFFFF",
+        "success_bg": "#173B2B" if dark else "#DCFCE7",
+        "success_text": "#B7F0C8" if dark else "#166534",
+        "warning_bg": "#49391B" if dark else "#FEF3C7",
+        "warning_text": "#F8D98A" if dark else "#92400E",
+        "error_bg": "#482629" if dark else "#FEE2E2",
+        "error_text": "#FFC1C1" if dark else "#991B1B",
+        "info_bg": "#193744" if dark else "#DBEAFE",
+        "info_text": "#B9E4F4" if dark else "#1E40AF",
+        "neutral_bg": "#34424A" if dark else "#E5E7EB",
+        "neutral_text": "#E2E8EC" if dark else "#374151",
     }
     st.markdown(f"""
     <style>
@@ -69,23 +80,31 @@ def inject_css(dark: bool = False) -> None:
     :root {{
       color-scheme: {"dark" if dark else "light"};
       --cv-bg:{palette["bg"]}; --cv-panel:{palette["panel"]};
-      --cv-text:{palette["text"]}; --cv-muted:{palette["muted"]};
-      --cv-border:{palette["border"]}; --cv-accent:{palette["accent"]};
-      --cv-soft:{palette["soft"]}; --cv-soft-text:{palette["soft_text"]};
-      --cv-input:{palette["input"]};
+      --cv-panel-alt:{palette["panel_alt"]}; --cv-text:{palette["text"]};
+      --cv-muted:{palette["muted"]}; --cv-border:{palette["border"]};
+      --cv-accent:{palette["accent"]}; --cv-soft:{palette["soft"]};
+      --cv-soft-text:{palette["soft_text"]}; --cv-input:{palette["input"]};
+      --cv-success-bg:{palette["success_bg"]}; --cv-success-text:{palette["success_text"]};
+      --cv-warning-bg:{palette["warning_bg"]}; --cv-warning-text:{palette["warning_text"]};
+      --cv-error-bg:{palette["error_bg"]}; --cv-error-text:{palette["error_text"]};
+      --cv-info-bg:{palette["info_bg"]}; --cv-info-text:{palette["info_text"]};
+      --cv-neutral-bg:{palette["neutral_bg"]}; --cv-neutral-text:{palette["neutral_text"]};
     }}
-    html, body, .stApp, [data-testid="stAppViewContainer"] {{
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
       background:var(--cv-bg)!important; color:var(--cv-text)!important;
       font-family:Inter,system-ui,sans-serif;
     }}
     .block-container {{max-width:1000px;padding-top:1.2rem;padding-bottom:3rem;}}
     [data-testid="stSidebar"], [data-testid="collapsedControl"] {{display:none!important;}}
     header[data-testid="stHeader"] {{background:transparent!important;}}
+    /* Default text. Avoid blanket rules on every nested element: component-specific
+       foregrounds below must remain paired with their own background surfaces. */
     h1,h2,h3,h4,p,li,label,.stMarkdown,.stMarkdown p,.stMarkdown li,
     [data-testid="stMarkdownContainer"],[data-testid="stCaptionContainer"],
     [data-testid="stWidgetLabel"],[data-testid="stFileUploaderDropzoneInstructions"] {{
       color:var(--cv-text)!important;
     }}
+    .stCaption,[data-testid="stCaptionContainer"] {{color:var(--cv-muted)!important;}}
     h1,h2,h3,.cv-brand,.cv-title,.claim-card-title {{font-family:'Source Serif 4',Georgia,serif;}}
     a {{color:var(--cv-accent)!important;}}
     .cv-topbar {{display:flex;align-items:center;justify-content:center;padding:.15rem 0 1rem;}}
@@ -100,25 +119,37 @@ def inject_css(dark: bool = False) -> None:
     .summary-label,.claim-card-eyebrow {{color:var(--cv-muted)!important;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;}}
     .claim-card-title {{font-size:1.4rem;font-weight:600;line-height:1.45;color:var(--cv-text)!important;margin:.5rem 0 1rem;}}
     .verdict-badge {{display:inline-block;padding:.32rem .72rem;border-radius:999px;font-size:.68rem;font-weight:700;text-transform:uppercase;}}
-    .verdict-supported {{background:#DCFCE7;color:#166534!important;}}
-    .verdict-partially_supported {{background:#FEF3C7;color:#92400E!important;}}
-    .verdict-unsupported {{background:#FFEDD5;color:#9A3412!important;}}
-    .verdict-contradicted {{background:#FEE2E2;color:#991B1B!important;}}
-    .verdict-unverifiable {{background:#E5E7EB;color:#374151!important;}}
+    .verdict-supported {{background:var(--cv-success-bg);color:var(--cv-success-text)!important;}}
+    .verdict-partially_supported {{background:var(--cv-warning-bg);color:var(--cv-warning-text)!important;}}
+    .verdict-unsupported {{background:#4A321E;color:#FFE0B2!important;}}
+    .verdict-contradicted {{background:var(--cv-error-bg);color:var(--cv-error-text)!important;}}
+    .verdict-unverifiable {{background:var(--cv-neutral-bg);color:var(--cv-neutral-text)!important;}}
     .quote {{border-left:3px solid var(--cv-accent);padding:.8rem 1rem;background:var(--cv-soft);color:var(--cv-soft-text)!important;font-style:italic;border-radius:0 10px 10px 0;line-height:1.6;}}
     .hl-passage,[data-testid="stVerticalBlockBorderWrapper"] {{background:var(--cv-panel)!important;border:1px solid var(--cv-border)!important;border-radius:16px;}}
     .hl-passage mark {{background:#FFF3A3;color:#172026!important;padding:0 2px;border-radius:3px;}}
     .hl-passage .best {{background:#FFE082;color:#172026!important;padding:2px 3px;border-radius:4px;}}
     .stButton>button,.stDownloadButton>button {{border-radius:10px;border:1px solid var(--cv-border);min-height:2.6rem;background:var(--cv-panel);color:var(--cv-text)!important;}}
     .stButton>button[kind="primary"] {{background:var(--cv-accent)!important;color:#071A18!important;border-color:var(--cv-accent)!important;}}
-    .stButton>button:disabled {{color:var(--cv-muted)!important;opacity:.4;}}
+    .stButton>button:disabled {{color:var(--cv-muted)!important;opacity:.55;}}
     [data-baseweb="input"]>div,[data-baseweb="textarea"]>div,[data-baseweb="select"]>div,
     [data-testid="stFileUploaderDropzone"] {{background:var(--cv-input)!important;border-color:var(--cv-border)!important;}}
     input,textarea,[data-baseweb="input"] input,[data-baseweb="textarea"] textarea {{color:var(--cv-text)!important;background:transparent!important;}}
     input::placeholder,textarea::placeholder {{color:var(--cv-muted)!important;opacity:1;}}
     [data-testid="stFileUploaderDropzone"] * {{color:var(--cv-text)!important;}}
+    /* Streamlit alerts, expanders, popovers, metrics, dataframes and code surfaces. */
+    [data-testid="stAlert"] {{background:var(--cv-panel-alt)!important;border:1px solid var(--cv-border)!important;border-radius:12px;}}
+    [data-testid="stAlert"] p,[data-testid="stAlert"] span,[data-testid="stAlert"] li {{color:var(--cv-text)!important;}}
+    [data-testid="stExpander"] {{background:var(--cv-panel)!important;border:1px solid var(--cv-border)!important;border-radius:12px;}}
+    [data-testid="stExpander"] summary,[data-testid="stExpander"] summary span {{color:var(--cv-text)!important;}}
+    [data-testid="stPopover"] button,[data-baseweb="popover"],[data-baseweb="menu"] {{color:var(--cv-text)!important;}}
+    [data-baseweb="popover"] > div,[data-baseweb="menu"] {{background:var(--cv-panel)!important;border-color:var(--cv-border)!important;}}
+    [data-baseweb="popover"] *,[data-baseweb="menu"] * {{color:var(--cv-text)!important;}}
+    [data-testid="stMetric"] {{background:var(--cv-panel)!important;border:1px solid var(--cv-border)!important;border-radius:12px;padding:.7rem;}}
+    [data-testid="stMetricLabel"],[data-testid="stMetricValue"],[data-testid="stMetricDelta"] {{color:var(--cv-text)!important;}}
+    [data-testid="stDataFrame"],[data-testid="stTable"] {{background:var(--cv-panel)!important;color:var(--cv-text)!important;}}
+    [data-testid="stCode"],.stCodeBlock {{background:var(--cv-panel-alt)!important;border:1px solid var(--cv-border)!important;}}
     [data-testid="stProgressBar"]>div>div {{background:var(--cv-accent)!important;}}
-    [data-testid="stPopover"] button {{color:var(--cv-text)!important;}}
+    [data-testid="stCheckbox"] label,[data-testid="stRadio"] label {{color:var(--cv-text)!important;}}
     </style>
     """, unsafe_allow_html=True)
 
