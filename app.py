@@ -1092,6 +1092,25 @@ div[data-testid="stPopover"] > div > button,
 [data-testid="stVerticalBlockBorderWrapper"] {border-color:var(--cv-border-strong)!important;box-shadow:var(--cv-shadow);}
 [data-testid="stExpander"],.summary-card,[data-testid="stAlert"] {border-color:var(--cv-border-strong)!important;}
 [data-testid="stExpander"] details[open] summary {border-bottom:1px solid var(--cv-border);}
+/* Streamlit paints its own pastel fill on the inner alert element. Force it
+   transparent so dark mode never leaves pale text on a pale bar. */
+[data-testid="stAlertContainer"],
+[data-testid="stAlertContentInfo"],
+[data-testid="stAlertContentSuccess"],
+[data-testid="stAlertContentWarning"],
+[data-testid="stAlertContentError"] {
+  background:transparent!important;
+  background-color:transparent!important;
+  color:var(--cv-text)!important;
+}
+[data-testid="stAlertContentInfo"] *,
+[data-testid="stAlertContentSuccess"] *,
+[data-testid="stAlertContentWarning"] *,
+[data-testid="stAlertContentError"] * {color:var(--cv-text)!important;}
+/* Some Streamlit versions colour expander headers from the base theme. */
+[data-testid="stExpander"] details > summary {background:var(--cv-panel-alt)!important;}
+[data-testid="stExpander"] details > summary p,
+[data-testid="stExpander"] details > summary span {color:var(--cv-text)!important;}
 .cv-hero {border-bottom-color:var(--cv-border-strong);}
 /* Highlights that do not glare in dark mode */
 .hl-passage mark {background:var(--cv-mark-bg)!important;color:var(--cv-mark-text)!important;}
