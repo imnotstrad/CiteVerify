@@ -11,7 +11,9 @@ import json
 
 import streamlit as st
 
+from citeverify.citefix import correct_citation
 from citeverify.config import Settings, get_settings
+from citeverify.evidence import find_evidence, highlight
 from citeverify.extract import ExtractionError, extract_claims_and_references
 from citeverify.ingest import extract_pdf, extract_text
 from citeverify.llm import LLMClient, LLMUnavailable
@@ -24,6 +26,7 @@ from citeverify.report import (
     report_to_json,
     report_to_markdown,
 )
+from citeverify.reliability import reliability_for_reference
 from citeverify.resolve import ResolutionError, check_doi, resolve_all
 from citeverify.verify import verify_claims
 
@@ -82,6 +85,9 @@ def inject_css() -> None:
         .confidence-note { color: #6B5B47; font-size: 0.76rem; margin-top: 0.2rem; }
         .quote { border-left: 3px solid #0F766E; padding: 0.45rem 0.8rem; background: #F0FDFA; color: #134E4A; font-style: italic; margin: 0.25rem 0 0.5rem; }
         .source-line { color: #5B6570; font-size: 0.82rem; margin-bottom: 0.4rem; }
+        .hl-passage { background: #FFFDF7; border: 1px solid #E4DACB; border-radius: 10px; padding: 0.6rem 0.8rem; margin: 0.3rem 0 0.6rem; line-height: 1.55; }
+        .hl-passage mark { background: #FFF3A3; padding: 0 2px; border-radius: 3px; }
+        .hl-passage .best { background: #FFE082; padding: 2px 3px; border-radius: 4px; }
         [data-testid="stVerticalBlockBorderWrapper"] { background: #FFFDF7; border-color: #E4DACB; border-radius: 14px; }
         .stButton > button { border-radius: 9px; }
         .stDownloadButton > button { border-radius: 9px; }
@@ -299,6 +305,63 @@ def render_summary(report: Report) -> None:
         st.caption(f"{counts['flagged']} claim(s) carry a source or evidence flag.")
 
 
+def render_highlighted_evidence(result: ClaimResult) -> None:
+    """Show where the claim's key terms appear in the source abstract. No LLM involved."""
+    abstract = (result.reference.abstract if result.reference else None) or ""
+    if not abstract.strip():
+        return
+    matches = find_evidence(result.claim.text, abstract, top_k=1)
+    with st.expander("Highlighted evidence in the source abstract"):
+        if not matches:
+            st.caption("No overlapping terms between the claim and this abstract.")
+            return
+        match = matches[0]
+        st.caption(
+            f"{match['match']} term overlap (score {match['score']}). "
+            "The brighter sentence is the closest match."
+        )
+        st.markdown(
+            '<div class="hl-passage">'
+            + highlight(match["paragraph"], set(match["matched_terms"]), match["best_sentence"])
+            + "</div>",
+            unsafe_allow_html=True,
+        )
+        for note in match["notes"]:
+            st.warning(note)
+
+
+def render_reliability(reference) -> None:
+    analysis = reliability_for_reference(reference)
+    st.write(
+        f"**Source reliability:** {analysis['score']}/100 ({analysis['grade']})"
+    )
+    st.caption(
+        "Based on the abstract and metadata only: not a quality judgement on the study."
+    )
+    st.dataframe(
+        [
+            {"Factor": f["factor"], "Score": f"{f['points']}/{f['max']}", "Detail": f["reason"]}
+            for f in analysis["factors"]
+        ],
+        use_container_width=True,
+        hide_index=True,
+    )
+    for flag in analysis["flags"]:
+        st.warning(flag)
+
+
+def render_citation_fix(reference) -> None:
+    if not (reference.raw or "").strip():
+        return
+    fixed = correct_citation(reference.raw)
+    st.write("**Citation check (APA 7)**")
+    if fixed["missing"]:
+        st.caption("Could not find: " + ", ".join(fixed["missing"]))
+    for issue in fixed["issues"]:
+        st.caption(f"• {issue}")
+    st.markdown(f"Suggested: {fixed['corrected']}")
+
+
 def render_claim(result: ClaimResult, index: int) -> None:
     with st.container(border=True):
         top_left, top_right = st.columns([5, 2])
@@ -340,6 +403,8 @@ def render_claim(result: ClaimResult, index: int) -> None:
         else:
             st.caption("No verbatim quote. The claim is marked unverifiable by design.")
 
+        render_highlighted_evidence(result)
+
         if result.reason:
             st.markdown(f"**Why:** {result.reason}")
         if result.suggested_fix:
@@ -376,6 +441,8 @@ def render_claim(result: ClaimResult, index: int) -> None:
                 if reference.provider:
                     st.write(f"**Provider:** {reference.provider}")
                 st.caption(reference.raw or "No raw reference text.")
+                render_reliability(reference)
+                render_citation_fix(reference)
 
 
 def render_report(report: Report, settings: Settings) -> None:

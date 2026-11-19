@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from .citefix import correct_citation
 from .models import ClaimResult, Confidence, Report, Verdict
+from .reliability import reliability_for_reference
 
 VERDICT_LABELS = {
     Verdict.SUPPORTED: "Supported",
@@ -99,6 +101,23 @@ def report_to_markdown(report: Report) -> str:
             lines.extend([f"**Source link:** {result.source_url}", ""])
         if result.flags:
             lines.extend([f"**Flags:** {', '.join(result.flags)}", ""])
+        if result.reference:
+            analysis = reliability_for_reference(result.reference)
+            lines.extend(
+                [
+                    f"**Source reliability:** {analysis['score']}/100 ({analysis['grade']}, "
+                    "abstract and metadata only)",
+                    "",
+                ]
+            )
+            if (result.reference.raw or "").strip():
+                lines.extend(
+                    [
+                        f"**Suggested citation (APA 7):** "
+                        f"{correct_citation(result.reference.raw)['corrected']}",
+                        "",
+                    ]
+                )
 
     if report.limitations:
         lines.extend(["## Limitations", ""])
