@@ -32,6 +32,9 @@ yarn-error.log*
 
 # --- Generated output ---
 generated_documents/
+.cache/
+.streamlit/secrets.toml
+data/gold_set_results.json
 
 # --- Editors and OS junk ---
 .vscode/
