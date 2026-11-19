@@ -54,28 +54,33 @@ DEMO_RETRACTED_DOI = "10.1016/S0140-6736(97)11096-0"
 
 def inject_css(dark: bool = False) -> None:
     palette = {
-        "bg": "#10191F" if dark else "#F7F3EA",
-        "panel": "#19262D" if dark else "#FFFDF7",
-        "panel_alt": "#22343C" if dark else "#F0EBE1",
-        "text": "#E8F0F1" if dark else "#172026",
-        "muted": "#A4B4BA" if dark else "#5B6570",
-        "border": "#34464D" if dark else "#E4DACB",
-        "accent": "#63C6B6" if dark else "#0F766E",
-        "soft": "#20343A" if dark else "#F0FDFA",
-        "soft_text": "#D3ECE7" if dark else "#134E4A",
-        "input": "#142129" if dark else "#FFFFFF",
-        "success_bg": "#173B2B" if dark else "#DCFCE7",
+        "bg": "#0D1217" if dark else "#F7F3EA",
+        "panel": "#161E25" if dark else "#FFFDF7",
+        "panel_alt": "#1F2933" if dark else "#F0EBE1",
+        "text": "#EAF0F3" if dark else "#172026",
+        "muted": "#A9B6BF" if dark else "#5B6570",
+        "border": "#34424D" if dark else "#E4DACB",
+        "accent": "#5EDCC8" if dark else "#0F766E",
+        "soft": "#12302E" if dark else "#F0FDFA",
+        "soft_text": "#CDF5EE" if dark else "#134E4A",
+        "input": "#10171D" if dark else "#FFFFFF",
+        "success_bg": "#12382A" if dark else "#DCFCE7",
         "success_text": "#B7F0C8" if dark else "#166534",
-        "warning_bg": "#49391B" if dark else "#FEF3C7",
+        "warning_bg": "#42340F" if dark else "#FEF3C7",
         "warning_text": "#F8D98A" if dark else "#92400E",
-        "unsupported_bg": "#49301D" if dark else "#FFEDD5",
+        "unsupported_bg": "#44290F" if dark else "#FFEDD5",
         "unsupported_text": "#FFD6A8" if dark else "#9A3412",
-        "error_bg": "#482629" if dark else "#FEE2E2",
+        "error_bg": "#43202A" if dark else "#FEE2E2",
         "error_text": "#FFC1C1" if dark else "#991B1B",
-        "info_bg": "#193744" if dark else "#DBEAFE",
+        "info_bg": "#12303F" if dark else "#DBEAFE",
         "info_text": "#B9E4F4" if dark else "#1E40AF",
-        "neutral_bg": "#34424A" if dark else "#E5E7EB",
+        "neutral_bg": "#2E3A43" if dark else "#E5E7EB",
         "neutral_text": "#E2E8EC" if dark else "#374151",
+        "border_strong": "#4A5A67" if dark else "#CDBFA6",
+        "shadow": "0 8px 28px rgba(0,0,0,.45)" if dark else "0 6px 22px rgba(60,45,20,.08)",
+        "mark_bg": "#6A5410" if dark else "#FFF3A3",
+        "best_bg": "#8A6D0B" if dark else "#FFE082",
+        "mark_text": "#FFF6D6" if dark else "#172026",
     }
     st.markdown(f"""
     <style>
@@ -93,6 +98,8 @@ def inject_css(dark: bool = False) -> None:
       --cv-error-bg:{palette["error_bg"]}; --cv-error-text:{palette["error_text"]};
       --cv-info-bg:{palette["info_bg"]}; --cv-info-text:{palette["info_text"]};
       --cv-neutral-bg:{palette["neutral_bg"]}; --cv-neutral-text:{palette["neutral_text"]};
+      --cv-border-strong:{palette["border_strong"]}; --cv-shadow:{palette["shadow"]};
+      --cv-mark-bg:{palette["mark_bg"]}; --cv-best-bg:{palette["best_bg"]}; --cv-mark-text:{palette["mark_text"]};
     }}
 
     /* Page and ordinary text */
@@ -1029,7 +1036,41 @@ EXTRA_CSS = """
 .cv-steps li.active .dot {color:var(--cv-accent);animation:cvpulse 1s ease-in-out infinite;}
 .cv-steps .detail {color:var(--cv-muted);font-weight:400;font-size:.85rem;display:block;}
 @keyframes cvpulse {0%,100%{opacity:.25;}50%{opacity:1;}}
-[data-testid="stFileUploaderDropzone"] {padding:2.2rem 1.5rem!important;}
+[data-testid="stFileUploaderDropzone"] {padding:2.2rem 1.5rem!important;transition:border-color .15s,background .15s;}
+[data-testid="stFileUploaderDropzone"]:hover {border-color:var(--cv-accent)!important;border-style:solid!important;}
+/* Surfaces: visible edges and a little depth */
+[data-testid="stVerticalBlockBorderWrapper"] {border-color:var(--cv-border-strong)!important;box-shadow:var(--cv-shadow);}
+[data-testid="stExpander"],.summary-card,[data-testid="stAlert"] {border-color:var(--cv-border-strong)!important;}
+[data-testid="stExpander"] details[open] summary {border-bottom:1px solid var(--cv-border);}
+.cv-hero {border-bottom-color:var(--cv-border-strong);}
+/* Highlights that do not glare in dark mode */
+.hl-passage mark {background:var(--cv-mark-bg)!important;color:var(--cv-mark-text)!important;}
+.hl-passage .best {background:var(--cv-best-bg)!important;color:var(--cv-mark-text)!important;}
+/* Badges get a faint outline so they hold their shape on any surface */
+.verdict-badge {box-shadow:inset 0 0 0 1px currentColor;}
+/* Streamlit's own controls */
+[data-testid="stToggle"] [role="checkbox"][aria-checked="true"] {background:var(--cv-accent)!important;}
+[data-testid="stToggle"] [role="checkbox"] + div {background:var(--cv-text)!important;}
+[data-testid="stToggle"] [role="checkbox"][aria-checked="false"] {background:var(--cv-border-strong)!important;}
+[data-testid="stSlider"] [role="slider"] {background:var(--cv-accent)!important;box-shadow:0 0 0 3px var(--cv-panel);}
+[data-testid="stSlider"] [data-testid="stTickBarMin"],[data-testid="stSlider"] [data-testid="stTickBarMax"],
+[data-testid="stSliderThumbValue"] {color:var(--cv-text)!important;}
+[data-testid="stProgress"] > div > div {background:var(--cv-border)!important;}
+[data-testid="stProgressBar"]>div>div {background:var(--cv-accent)!important;}
+button[role="tab"] {color:var(--cv-muted)!important;}
+button[role="tab"][aria-selected="true"] {color:var(--cv-text)!important;}
+[data-baseweb="tab-highlight"] {background:var(--cv-accent)!important;}
+[data-baseweb="tab-border"] {background:var(--cv-border)!important;}
+/* Focus, hover and selection */
+:focus-visible {outline:2px solid var(--cv-accent)!important;outline-offset:2px;}
+::selection {background:var(--cv-accent);color:#071A18;}
+.stButton>button:hover:not(:disabled),.stDownloadButton>button:hover {background:var(--cv-panel-alt)!important;}
+.stButton>button[kind="primary"]:hover:not(:disabled) {filter:brightness(1.08);background:var(--cv-accent)!important;}
+.stButton>button:disabled {border-style:dashed!important;}
+.stDownloadButton>button[kind="primary"] {background:var(--cv-accent)!important;color:#071A18!important;border-color:var(--cv-accent)!important;}
+::-webkit-scrollbar {width:10px;height:10px;}
+::-webkit-scrollbar-thumb {background:var(--cv-border-strong);border-radius:8px;}
+::-webkit-scrollbar-track {background:transparent;}
 .stButton>button:disabled {background:var(--cv-panel-alt)!important;cursor:not-allowed;}
 </style>
 """
