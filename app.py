@@ -219,6 +219,28 @@ def inject_css(dark: bool = False) -> None:
       color:var(--cv-text)!important;
       border:1px solid var(--cv-border)!important;
     }}
+
+    /* Streamlit wraps popover trigger text in nested elements; style those too. */
+    [data-testid="stPopover"] > button,
+    [data-testid="stPopover"] > button p,
+    [data-testid="stPopover"] > button span,
+    [data-testid="stPopover"] > button div {{
+      color:var(--cv-text)!important;
+      opacity:1!important;
+    }}
+    [data-testid="stPopoverBody"],
+    [data-testid="stPopoverBody"] p,
+    [data-testid="stPopoverBody"] span,
+    [data-testid="stPopoverBody"] div,
+    [data-testid="stPopoverBody"] label,
+    [data-testid="stPopoverBody"] li,
+    [data-testid="stPopoverBody"] strong,
+    [data-testid="stPopoverBody"] h1,
+    [data-testid="stPopoverBody"] h2,
+    [data-testid="stPopoverBody"] h3 {{
+      color:var(--cv-text)!important;
+      opacity:1!important;
+    }}
     [data-testid="stPopoverBody"] h1,
     [data-testid="stPopoverBody"] h2,
     [data-testid="stPopoverBody"] h3,
