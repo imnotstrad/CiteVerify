@@ -149,7 +149,7 @@ def inject_css(dark: bool = False) -> None:
     [data-testid="stFileUploader"] button {{
       border-radius:10px!important;
       border:1px solid var(--cv-border)!important;
-      min-height:2.6rem;
+      min-height:2.75rem;
       background:var(--cv-panel)!important;
       color:var(--cv-text)!important;
     }}
@@ -856,7 +856,7 @@ def render_report(report: Report, settings: Settings, llm: LLMClient) -> None:
             width="stretch",
         )
     with middle:
-        st.markdown(f'<div style="text-align:center;color:var(--cv-muted);font-weight:700;letter-spacing:.08em;padding:.55rem 0;">CLAIM {current_index+1:02d} / {len(shown):02d}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="cv-counter">CLAIM {current_index+1:02d} / {len(shown):02d}</div>', unsafe_allow_html=True)
     with right:
         next_clicked = st.button(
             "→",
@@ -1049,6 +1049,7 @@ EXTRA_CSS = """
 <style>
 .cv-or {text-align:center;color:var(--cv-muted)!important;font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;margin:.9rem 0 .4rem;}
 .cv-chips {display:flex;flex-wrap:wrap;gap:.4rem;margin:.1rem 0 .8rem;}
+.cv-counter {text-align:center;color:var(--cv-accent)!important;font-weight:700;letter-spacing:.08em;padding:.55rem 0;}
 .cv-steps {list-style:none;padding:0;margin:.6rem 0 .8rem;}
 .cv-steps li {display:flex;gap:.75rem;align-items:baseline;padding:.6rem 0;color:var(--cv-muted);border-bottom:1px solid var(--cv-border);}
 .cv-steps li .dot {width:1.3rem;text-align:center;font-weight:700;}
@@ -1111,7 +1112,7 @@ div[data-testid="stPopover"] > div > button,
 [data-testid="stExpander"] details > summary {background:var(--cv-panel-alt)!important;}
 [data-testid="stExpander"] details > summary p,
 [data-testid="stExpander"] details > summary span {color:var(--cv-text)!important;}
-.cv-hero {border-bottom-color:var(--cv-border-strong);}
+.cv-hero {border-bottom:2px solid var(--cv-accent)!important;}
 /* Highlights that do not glare in dark mode */
 .hl-passage mark {background:var(--cv-mark-bg)!important;color:var(--cv-mark-text)!important;}
 .hl-passage .best {background:var(--cv-best-bg)!important;color:var(--cv-mark-text)!important;}
