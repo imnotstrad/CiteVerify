@@ -246,6 +246,23 @@ def inject_css(dark: bool = False) -> None:
     [data-testid="stPopoverBody"] h3,
     [data-testid="stPopoverBody"] p,
     [data-testid="stPopoverBody"] strong {{color:var(--cv-text)!important;}}
+
+    /* Dedicated About Us panel: solid surface and explicit high-contrast text. */
+    .cv-about-panel {{
+      background:var(--cv-panel)!important;
+      color:var(--cv-text)!important;
+      padding:.25rem .15rem;
+      border-radius:10px;
+    }}
+    .cv-about-panel h3,
+    .cv-about-panel p,
+    .cv-about-panel strong {{
+      color:var(--cv-text)!important;
+      opacity:1!important;
+    }}
+    .cv-about-panel h3 {{margin:.2rem 0 .8rem;}}
+    .cv-about-panel p {{line-height:1.6;margin:.55rem 0;}}
+    .cv-about-panel strong {{font-weight:700;}}
     [data-testid="stPopoverBody"] *:not(svg):not(path) {{color:var(--cv-text)!important;}}
     [data-testid="stPopoverBody"] {{isolation:isolate;}}
     
@@ -300,10 +317,17 @@ def render_topbar() -> None:
         st.markdown('<div class="cv-topbar"><div class="cv-brand">CiteVerify</div></div>', unsafe_allow_html=True)
     with right:
         with st.popover("About us", use_container_width=True):
-            st.markdown("### About CiteVerify")
-            st.write("Researchers cite papers that often do not say what the citing sentence claims. Existing tools check whether a reference exists or is formatted correctly; CiteVerify checks **claim support**.")
-            st.write("For each cited claim, it produces a verdict, a verbatim evidence quote, a confidence label, a DOI/source link, an optional suggested fix, and flags such as retracted.")
-            st.markdown("**The design rule is simple: no verbatim quote, no verdict.** If the source text is insufficient, the claim is marked unverifiable.")
+            st.markdown(
+                """
+                <div class="cv-about-panel">
+                  <h3>About CiteVerify</h3>
+                  <p>Researchers cite papers that often do not say what the citing sentence claims. Existing tools check whether a reference exists or is formatted correctly; CiteVerify checks <strong>claim support</strong>.</p>
+                  <p>For each cited claim, it produces a verdict, a verbatim evidence quote, a confidence label, a DOI/source link, an optional suggested fix, and flags such as retracted.</p>
+                  <p><strong>The design rule is simple: no verbatim quote, no verdict.</strong> If the source text is insufficient, the claim is marked unverifiable.</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 
