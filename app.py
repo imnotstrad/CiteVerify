@@ -224,6 +224,22 @@ def inject_css(dark: bool = False) -> None:
     [data-testid="stPopoverBody"] h3,
     [data-testid="stPopoverBody"] p,
     [data-testid="stPopoverBody"] strong {{color:var(--cv-text)!important;}}
+    [data-testid="stPopoverBody"] *:not(svg):not(path) {{color:var(--cv-text)!important;}}
+    [data-testid="stPopoverBody"] {{isolation:isolate;}}
+    
+    /* Source flags use a dedicated surface so their text never inherits
+       Streamlit's default alert foreground colour. */
+    .source-flag {{
+      display:block;padding:.7rem .9rem;margin:.65rem 0;
+      border:1px solid var(--cv-border);border-radius:10px;
+      background:var(--cv-warning-bg);color:var(--cv-warning-text)!important;
+      font-weight:600;line-height:1.45;
+    }}
+    .source-flag-retracted {{
+      background:var(--cv-error-bg);color:var(--cv-error-text)!important;
+      border-color:var(--cv-error-text);
+    }}
+    .source-flag * {{color:inherit!important;}}
     </style>
     """, unsafe_allow_html=True)
 
@@ -261,7 +277,7 @@ def render_topbar() -> None:
     with center:
         st.markdown('<div class="cv-topbar"><div class="cv-brand">CiteVerify</div></div>', unsafe_allow_html=True)
     with right:
-        with st.popover("About me", use_container_width=True):
+        with st.popover("About us", use_container_width=True):
             st.markdown("### About CiteVerify")
             st.write("Researchers cite papers that often do not say what the citing sentence claims. Existing tools check whether a reference exists or is formatted correctly; CiteVerify checks **claim support**.")
             st.write("For each cited claim, it produces a verdict, a verbatim evidence quote, a confidence label, a DOI/source link, an optional suggested fix, and flags such as retracted.")
@@ -457,9 +473,17 @@ def render_claim(
         if result.flags:
             flag_text = ", ".join(flag.replace("_", " ") for flag in result.flags)
             if "retracted" in result.flags:
-                st.error(f"Source flag: {flag_text}. This citation needs scrutiny.")
+                st.markdown(
+                    f'<div class="source-flag source-flag-retracted">Source flag: '
+                    f'{html.escape(flag_text)}. This citation needs scrutiny.</div>',
+                    unsafe_allow_html=True,
+                )
             else:
-                st.warning(f"Source flag: {flag_text}.")
+                st.markdown(
+                    f'<div class="source-flag">Source flag: '
+                    f'{html.escape(flag_text)}.</div>',
+                    unsafe_allow_html=True,
+                )
 
         st.markdown("**Evidence from the source**")
         if result.evidence_quote:
