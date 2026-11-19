@@ -55,75 +55,73 @@ def inject_css(dark: bool = False) -> None:
     palette = {
         "bg": "#10191F" if dark else "#F7F3EA",
         "panel": "#19262D" if dark else "#FFFDF7",
-        "sidebar": "#142129" if dark else "#EFE8DA",
         "text": "#E8F0F1" if dark else "#172026",
         "muted": "#A4B4BA" if dark else "#5B6570",
         "border": "#34464D" if dark else "#E4DACB",
         "accent": "#63C6B6" if dark else "#0F766E",
         "soft": "#20343A" if dark else "#F0FDFA",
         "soft_text": "#D3ECE7" if dark else "#134E4A",
+        "input": "#142129" if dark else "#FFFFFF",
     }
-    st.markdown(
-        f"""
-        <style>
-        @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap');
-        :root {{
-          --cv-bg: {palette["bg"]};
-          --cv-panel: {palette["panel"]};
-          --cv-sidebar: {palette["sidebar"]};
-          --cv-text: {palette["text"]};
-          --cv-muted: {palette["muted"]};
-          --cv-border: {palette["border"]};
-          --cv-accent: {palette["accent"]};
-          --cv-soft: {palette["soft"]};
-          --cv-soft-text: {palette["soft_text"]};
-        }}
-        html, body, [class*="css"] {{ font-family: 'Inter', system-ui, -apple-system, sans-serif; }}
-        .stApp, [data-testid="stAppViewContainer"] {{ background: var(--cv-bg); color: var(--cv-text); }}
-        .block-container {{ padding-top: 2.5rem; padding-bottom: 4rem; max-width: 1120px; }}
-        h1, h2, h3, p, label, [data-testid="stMarkdownContainer"] {{ color: var(--cv-text); }}
-        h1, h2, h3 {{ font-family: 'Source Serif 4', Georgia, serif; }}
-        [data-testid="stSidebar"] {{ background: var(--cv-sidebar); border-right: 1px solid var(--cv-border); }}
-        [data-testid="stSidebar"] * {{ color: var(--cv-text); }}
-        .cv-brand {{ font-family: 'Source Serif 4', Georgia, serif; font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; color: var(--cv-text); }}
-        .cv-tag {{ color: var(--cv-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; }}
-        .cv-hero {{ border-bottom: 1px solid var(--cv-border); padding-bottom: 1rem; margin-bottom: 1.1rem; }}
-        .cv-kicker {{ color: var(--cv-accent); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }}
-        .cv-title {{ font-family: 'Source Serif 4', Georgia, serif; font-size: 2.3rem; line-height: 1.12; color: var(--cv-text); margin: 0.15rem 0 0.35rem; }}
-        .cv-sub {{ color: var(--cv-muted); font-size: 1rem; }}
-        .summary-card {{ background: var(--cv-panel); border: 1px solid var(--cv-border); border-radius: 14px; padding: 0.8rem 0.9rem; min-height: 5.2rem; }}
-        .summary-value {{ font-family: 'Source Serif 4', Georgia, serif; font-size: 1.75rem; font-weight: 700; line-height: 1; color: var(--cv-text); }}
-        .summary-label {{ color: var(--cv-muted); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.38rem; }}
-        .summary-card.supported {{ border-top: 4px solid #15803D; }}
-        .summary-card.partially_supported {{ border-top: 4px solid #B45309; }}
-        .summary-card.unsupported {{ border-top: 4px solid #C2410C; }}
-        .summary-card.contradicted {{ border-top: 4px solid #B91C1C; }}
-        .summary-card.unverifiable {{ border-top: 4px solid #6B7280; }}
-        .summary-card.total {{ border-top: 4px solid var(--cv-accent); }}
-        .claim-card-title {{ font-family: 'Source Serif 4', Georgia, serif; font-size: 1.45rem; font-weight: 600; line-height: 1.45; color: var(--cv-text); margin: 0.5rem 0 1rem; }}
-        .claim-card-eyebrow {{ color: var(--cv-muted); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }}
-        .verdict-badge {{ display: inline-block; padding: 0.32rem 0.72rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }}
-        .verdict-supported {{ background: #DCFCE7; color: #166534; }}
-        .verdict-partially_supported {{ background: #FEF3C7; color: #92400E; }}
-        .verdict-unsupported {{ background: #FFEDD5; color: #9A3412; }}
-        .verdict-contradicted {{ background: #FEE2E2; color: #991B1B; }}
-        .verdict-unverifiable {{ background: #E5E7EB; color: #374151; }}
-        .confidence-note {{ color: var(--cv-muted); font-size: 0.78rem; margin-top: 0.45rem; }}
-        .quote {{ border-left: 3px solid var(--cv-accent); padding: 0.8rem 1rem; background: var(--cv-soft); color: var(--cv-soft-text); font-style: italic; margin: 0.35rem 0 0.75rem; border-radius: 0 10px 10px 0; line-height: 1.6; }}
-        .source-line {{ color: var(--cv-muted); font-size: 0.85rem; margin: 0.35rem 0 0.8rem; }}
-        .hl-passage {{ background: var(--cv-panel); border: 1px solid var(--cv-border); border-radius: 10px; padding: 0.7rem 0.85rem; margin: 0.3rem 0 0.6rem; line-height: 1.55; }}
-        .hl-passage mark {{ background: #FFF3A3; color: #172026; padding: 0 2px; border-radius: 3px; }}
-        .hl-passage .best {{ background: #FFE082; color: #172026; padding: 2px 3px; border-radius: 4px; }}
-        [data-testid="stVerticalBlockBorderWrapper"] {{ background: var(--cv-panel); border-color: var(--cv-border); border-radius: 18px; }}
-        .stButton > button, .stDownloadButton > button {{ border-radius: 10px; border: 1px solid var(--cv-border); min-height: 2.7rem; }}
-        .stButton > button:disabled {{ color: var(--cv-muted) !important; opacity: 0.42; cursor: not-allowed; }}
-        [data-baseweb="input"] > div, [data-baseweb="textarea"] > div, [data-baseweb="select"] > div {{ background: var(--cv-panel); border-color: var(--cv-border); }}
-        input, textarea {{ color: var(--cv-text) !important; }}
-        .small-muted {{ color: var(--cv-muted); font-size: 0.82rem; }}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap');
+    :root {{
+      color-scheme: {"dark" if dark else "light"};
+      --cv-bg:{palette["bg"]}; --cv-panel:{palette["panel"]};
+      --cv-text:{palette["text"]}; --cv-muted:{palette["muted"]};
+      --cv-border:{palette["border"]}; --cv-accent:{palette["accent"]};
+      --cv-soft:{palette["soft"]}; --cv-soft-text:{palette["soft_text"]};
+      --cv-input:{palette["input"]};
+    }}
+    html, body, .stApp, [data-testid="stAppViewContainer"] {{
+      background:var(--cv-bg)!important; color:var(--cv-text)!important;
+      font-family:Inter,system-ui,sans-serif;
+    }}
+    .block-container {{max-width:1000px;padding-top:1.2rem;padding-bottom:3rem;}}
+    [data-testid="stSidebar"], [data-testid="collapsedControl"] {{display:none!important;}}
+    header[data-testid="stHeader"] {{background:transparent!important;}}
+    h1,h2,h3,h4,p,li,label,.stMarkdown,.stMarkdown p,.stMarkdown li,
+    [data-testid="stMarkdownContainer"],[data-testid="stCaptionContainer"],
+    [data-testid="stWidgetLabel"],[data-testid="stFileUploaderDropzoneInstructions"] {{
+      color:var(--cv-text)!important;
+    }}
+    h1,h2,h3,.cv-brand,.cv-title,.claim-card-title {{font-family:'Source Serif 4',Georgia,serif;}}
+    a {{color:var(--cv-accent)!important;}}
+    .cv-topbar {{display:flex;align-items:center;justify-content:center;padding:.15rem 0 1rem;}}
+    .cv-brand {{font-size:2rem;font-weight:700;letter-spacing:-.04em;color:var(--cv-text);}}
+    .cv-tag {{font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--cv-muted);}}
+    .cv-hero {{border-bottom:1px solid var(--cv-border);padding-bottom:.8rem;margin-bottom:1rem;}}
+    .cv-kicker {{color:var(--cv-accent)!important;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;}}
+    .cv-title {{font-size:2rem;line-height:1.15;color:var(--cv-text);margin:.15rem 0 .3rem;}}
+    .cv-sub,.small-muted,.source-line,.confidence-note {{color:var(--cv-muted)!important;}}
+    .summary-card {{background:var(--cv-panel);border:1px solid var(--cv-border);border-radius:14px;padding:.8rem .9rem;}}
+    .summary-value {{font-size:1.6rem;font-weight:700;color:var(--cv-text);}}
+    .summary-label,.claim-card-eyebrow {{color:var(--cv-muted)!important;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;}}
+    .claim-card-title {{font-size:1.4rem;font-weight:600;line-height:1.45;color:var(--cv-text)!important;margin:.5rem 0 1rem;}}
+    .verdict-badge {{display:inline-block;padding:.32rem .72rem;border-radius:999px;font-size:.68rem;font-weight:700;text-transform:uppercase;}}
+    .verdict-supported {{background:#DCFCE7;color:#166534!important;}}
+    .verdict-partially_supported {{background:#FEF3C7;color:#92400E!important;}}
+    .verdict-unsupported {{background:#FFEDD5;color:#9A3412!important;}}
+    .verdict-contradicted {{background:#FEE2E2;color:#991B1B!important;}}
+    .verdict-unverifiable {{background:#E5E7EB;color:#374151!important;}}
+    .quote {{border-left:3px solid var(--cv-accent);padding:.8rem 1rem;background:var(--cv-soft);color:var(--cv-soft-text)!important;font-style:italic;border-radius:0 10px 10px 0;line-height:1.6;}}
+    .hl-passage,[data-testid="stVerticalBlockBorderWrapper"] {{background:var(--cv-panel)!important;border:1px solid var(--cv-border)!important;border-radius:16px;}}
+    .hl-passage mark {{background:#FFF3A3;color:#172026!important;padding:0 2px;border-radius:3px;}}
+    .hl-passage .best {{background:#FFE082;color:#172026!important;padding:2px 3px;border-radius:4px;}}
+    .stButton>button,.stDownloadButton>button {{border-radius:10px;border:1px solid var(--cv-border);min-height:2.6rem;background:var(--cv-panel);color:var(--cv-text)!important;}}
+    .stButton>button[kind="primary"] {{background:var(--cv-accent)!important;color:#071A18!important;border-color:var(--cv-accent)!important;}}
+    .stButton>button:disabled {{color:var(--cv-muted)!important;opacity:.4;}}
+    [data-baseweb="input"]>div,[data-baseweb="textarea"]>div,[data-baseweb="select"]>div,
+    [data-testid="stFileUploaderDropzone"] {{background:var(--cv-input)!important;border-color:var(--cv-border)!important;}}
+    input,textarea,[data-baseweb="input"] input,[data-baseweb="textarea"] textarea {{color:var(--cv-text)!important;background:transparent!important;}}
+    input::placeholder,textarea::placeholder {{color:var(--cv-muted)!important;opacity:1;}}
+    [data-testid="stFileUploaderDropzone"] * {{color:var(--cv-text)!important;}}
+    [data-testid="stProgressBar"]>div>div {{background:var(--cv-accent)!important;}}
+    [data-testid="stPopover"] button {{color:var(--cv-text)!important;}}
+    </style>
+    """, unsafe_allow_html=True)
+
 
 
 def init_state() -> None:
@@ -151,107 +149,19 @@ def confidence_label(result: ClaimResult) -> str:
     return CONFIDENCE_LABELS.get(result.confidence, result.confidence.value)
 
 
-def render_sidebar(settings: Settings, llm: LLMClient):
-    with st.sidebar:
-        st.markdown('<div class="cv-brand">CiteVerify</div>', unsafe_allow_html=True)
-        st.markdown(
-            '<div class="cv-tag">Evidence, not verdicts</div>',
-            unsafe_allow_html=True,
-        )
-        st.toggle("Dark mode", key="dark_mode", help="Switch between light and dark appearance.")
-        st.write("")
-        mode = st.radio(
-            "Mode",
-            ["Demo report", "Analyze a paper"],
-            index=0,
-            label_visibility="collapsed",
-        )
+def render_topbar() -> None:
+    left, center, right = st.columns([1.2, 4.6, 1.5], vertical_alignment="center")
+    with left:
+        st.toggle("Dark mode", key="dark_mode", help="Switch between dark and light appearance.")
+    with center:
+        st.markdown('<div class="cv-topbar"><div><div class="cv-brand">CiteVerify</div><div class="cv-tag">Evidence, not verdicts</div></div></div>', unsafe_allow_html=True)
+    with right:
+        with st.popover("About me", use_container_width=True):
+            st.markdown("### About CiteVerify")
+            st.write("Researchers cite papers that often do not say what the citing sentence claims. Existing tools check whether a reference exists or is formatted correctly; CiteVerify checks **claim support**.")
+            st.write("For each cited claim, it produces a verdict, a verbatim evidence quote, a confidence label, a DOI/source link, an optional suggested fix, and flags such as retracted.")
+            st.markdown("**The design rule is simple: no verbatim quote, no verdict.** If the source text is insufficient, the claim is marked unverifiable.")
 
-        uploaded = None
-        pasted = ""
-        max_claims = 8
-        analyze_clicked = False
-
-        if mode == "Demo report":
-            st.info(
-                "Prebuilt report. Works offline and needs no API key. "
-                "The demo paper is illustrative; the cited sources are real."
-            )
-            if st.button("Reload demo", use_container_width=True):
-                st.session_state.report = None
-                st.session_state.report_mode = None
-        else:
-            st.caption("Upload a PDF or paste text. New-paper analysis needs an LLM key.")
-            uploaded = st.file_uploader("Upload a paper", type=["pdf"])
-            pasted = st.text_area(
-                "…or paste paper text",
-                height=150,
-                placeholder="Paste the paper text, including the reference section.",
-            )
-            max_claims = st.slider("Maximum claims", 3, 10, 8)
-            analyze_clicked = st.button(
-                "Analyze paper", type="primary", use_container_width=True
-            )
-            if not settings.llm_configured:
-                st.warning("No LLM_API_KEY configured. Use the demo report instead.")
-
-        st.divider()
-        st.markdown("#### DOI quick check")
-        st.caption("Check retraction status and metadata without an LLM.")
-        if st.button("Use example retracted DOI", use_container_width=True):
-            st.session_state.doi_query = DEMO_RETRACTED_DOI
-        doi_query = st.text_input(
-            "DOI",
-            key="doi_query",
-            placeholder="10.1016/S0140-6736(97)11096-0",
-            label_visibility="collapsed",
-        )
-        doi_clicked = st.button("Check DOI", use_container_width=True)
-
-        if doi_clicked:
-            if not doi_query.strip():
-                st.warning("Enter a DOI first.")
-            else:
-                with st.spinner("Checking Crossref and OpenAlex…"):
-                    try:
-                        st.session_state.doi_result = check_doi(doi_query, settings)
-                    except (ResolutionError, Exception) as exc:
-                        st.session_state.doi_result = {"error": str(exc)}
-
-        result = st.session_state.get("doi_result")
-        if isinstance(result, dict) and result.get("error"):
-            st.error(result["error"])
-        elif result is not None:
-            if result.is_retracted:
-                st.error(f"Retracted source: {result.title or result.doi}")
-            else:
-                st.success(f"No retraction flag found: {result.title or result.doi}")
-            if result.year:
-                st.caption(f"{result.year} · {result.doi}")
-            if result.url:
-                st.markdown(f"[Open source ↗]({result.url})")
-            st.caption("OpenAlex retraction status. Absence of a flag is not proof.")
-
-        if st.session_state.get("report") is not None:
-            report = st.session_state.report
-            st.divider()
-            st.markdown("#### Export")
-            st.download_button(
-                "Download Markdown",
-                data=report_to_markdown(report),
-                file_name="citeverify_report.md",
-                mime="text/markdown",
-                use_container_width=True,
-            )
-            st.download_button(
-                "Download JSON",
-                data=report_to_json(report),
-                file_name="citeverify_report.json",
-                mime="application/json",
-                use_container_width=True,
-            )
-
-    return mode, uploaded, pasted, max_claims, analyze_clicked
 
 
 def run_analysis(
@@ -558,92 +468,50 @@ def render_claim(
                     render_citation_fix(reference)
 
 
-def render_report(
-    report: Report,
-    settings: Settings,
-    llm: LLMClient,
-) -> None:
-    render_header(
-        report.paper_title,
-        "One claim at a time. Review the evidence, verdict, and suggested correction.",
-        kicker="CiteVerify report",
-    )
+def render_report(report: Report, settings: Settings, llm: LLMClient) -> None:
     if report.mode == "demo":
-        st.info(
-            "**Demo report.** The citing paper is illustrative; the cited papers and "
-            "their abstracts are real. Upload your own paper to run a live analysis."
-        )
+        st.caption("Demo report · The citing paper is illustrative; the cited papers and abstracts are real.")
+    st.markdown(f'<div class="cv-hero"><div class="cv-kicker">Research review</div><div class="cv-title">{html.escape(report.paper_title)}</div><div class="cv-sub">Review one cited claim at a time.</div></div>', unsafe_allow_html=True)
+    shown = report.results
+    if not shown:
+        st.info("No claims were extracted from this paper.")
+        return
+    current_index = min(max(0, int(st.session_state.get("claim_index", 0))), len(shown)-1)
+    render_claim(shown[current_index], current_index+1, len(shown), settings, llm)
 
-    render_summary(report)
+    # Card controls are deliberately placed directly beneath the flashcard.
+    st.markdown('<div class="cv-card-controls"></div>', unsafe_allow_html=True)
+    left, middle, right = st.columns([1, 5, 1], vertical_alignment="center")
+    with left:
+        previous_clicked = st.button("←", key="previous_claim", help="Previous claim", disabled=current_index == 0, use_container_width=True)
+    with middle:
+        st.markdown(f'<div style="text-align:center;color:var(--cv-muted);font-weight:700;letter-spacing:.08em;padding:.55rem 0;">CLAIM {current_index+1:02d} / {len(shown):02d}</div>', unsafe_allow_html=True)
+    with right:
+        next_clicked = st.button("→", key="next_claim", help="Next claim", disabled=current_index == len(shown)-1, use_container_width=True)
+    if previous_clicked:
+        st.session_state.claim_index = max(0, current_index-1)
+        st.rerun()
+    if next_clicked:
+        st.session_state.claim_index = min(len(shown)-1, current_index+1)
+        st.rerun()
+    st.progress((current_index+1)/len(shown))
 
-    report_tab, eval_tab, about_tab = st.tabs(["Claims", "Evaluation", "About"])
-    with report_tab:
-        options = [verdict.value for verdict in Verdict]
-        selected = st.multiselect(
-            "Filter claims by verdict",
-            options=options,
-            format_func=lambda value: VERDICT_LABELS[Verdict(value)],
-            default=[],
-            placeholder="All claims",
-        )
-        shown = report.results
-        if selected:
-            shown = [result for result in report.results if result.verdict.value in selected]
+    st.divider()
+    st.markdown("**Finished reviewing?**")
+    c1, c2 = st.columns([1, 2], vertical_alignment="bottom")
+    with c1:
+        if st.button("Start over", key="start_over", use_container_width=True):
+            st.session_state.report = None
+            st.session_state.live_report = None
+            st.session_state.report_mode = None
+            st.session_state.claim_index = 0
+            st.rerun()
+    with c2:
+        new_pdf = st.file_uploader("Upload a new PDF", type=["pdf"], key="new_report_pdf")
+        if st.button("Analyze new PDF", key="analyze_new_pdf", type="primary", disabled=new_pdf is None, use_container_width=True):
+            run_analysis(new_pdf, "", 8, settings, llm)
+            st.rerun()
 
-        if not shown:
-            st.caption("No claims match that filter.")
-        else:
-            current_index = min(
-                max(0, int(st.session_state.get("claim_index", 0))),
-                len(shown) - 1,
-            )
-            nav_left, nav_middle, nav_right = st.columns([1, 2, 1])
-            with nav_left:
-                previous_clicked = st.button(
-                    "← Previous",
-                    key="previous_claim",
-                    use_container_width=True,
-                    disabled=current_index == 0,
-                )
-            with nav_middle:
-                st.markdown(
-                    f'<div style="text-align:center;padding:.65rem 0;color:var(--cv-muted);'
-                    f'font-weight:700;letter-spacing:.08em;">CLAIM {current_index + 1:02d} '
-                    f'/ {len(shown):02d}</div>',
-                    unsafe_allow_html=True,
-                )
-            with nav_right:
-                next_clicked = st.button(
-                    "Next →",
-                    key="next_claim",
-                    use_container_width=True,
-                    disabled=current_index == len(shown) - 1,
-                )
-
-            if previous_clicked:
-                current_index = max(0, current_index - 1)
-            elif next_clicked:
-                current_index = min(len(shown) - 1, current_index + 1)
-            st.session_state.claim_index = current_index
-
-            st.progress((current_index + 1) / len(shown))
-            render_claim(
-                shown[current_index],
-                current_index + 1,
-                len(shown),
-                settings,
-                llm,
-            )
-            st.caption(
-                "The left arrow is disabled on the first claim and the right arrow "
-                "is disabled on the last claim."
-            )
-
-    with eval_tab:
-        render_evaluation(settings)
-
-    with about_tab:
-        render_about(settings)
 
 
 def render_evaluation(settings: Settings) -> None:
@@ -766,51 +634,21 @@ def render_deployment_diagnostics(settings: Settings) -> None:
             )
 
 
-def render_empty_state() -> None:
-    render_header(
-        "Check the citation, not just the reference.",
-        "Upload a paper and see which claims its sources actually support.",
-        kicker="CiteVerify",
-    )
-    st.markdown(
-        """
-        <div style="background:#FFFDF7;border:1px solid #E4DACB;border-radius:16px;padding:1.2rem 1.4rem;">
-          <h3 style="margin-top:0;">Start with the demo</h3>
-          <p style="color:#5B6570;margin-bottom:.4rem;">
-            The sidebar has a prebuilt report that needs no API key. It shows
-            supported, partially supported, contradicted, unsupported, and
-            unverifiable claims — each with a source quote and DOI link.
-          </p>
-          <p style="color:#5B6570;margin-bottom:0;">
-            To analyze a new paper, switch to <b>Analyze a paper</b> and add an
-            LLM key in <code>.env</code>.
-          </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.write("")
-    steps = st.columns(4)
-    for column, (number, title, text) in zip(
-        steps,
-        [
-            ("01", "Ingest", "PDF or pasted text. References included."),
-            ("02", "Resolve", "DOI and title lookup via Crossref and OpenAlex."),
-            ("03", "Verify", "Source-only comparison with a quote-or-abstain rule."),
-            ("04", "Report", "Verdicts, evidence, confidence, and suggested fixes."),
-        ],
-    ):
-        with column:
-            st.markdown(
-                f"""
-                <div class="summary-card total">
-                  <div class="summary-value">{number}</div>
-                  <div class="summary-label">{html.escape(title)}</div>
-                  <div class="small-muted" style="margin-top:.45rem;">{html.escape(text)}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+def render_empty_state(settings: Settings, llm: LLMClient) -> None:
+    st.markdown('<div style="text-align:center;padding:5vh 0 2vh;"><div class="cv-title">CiteVerify</div><div class="cv-sub">Evidence, not verdicts.</div></div>', unsafe_allow_html=True)
+    st.markdown('<div style="text-align:center;color:var(--cv-muted);margin:0 auto 1rem;max-width:620px;">Drop a research paper here to check whether its cited sources actually support its claims.</div>', unsafe_allow_html=True)
+    uploaded = st.file_uploader("Drop your PDF here", type=["pdf"], key="home_pdf", help="Choose a PDF or drag it into this upload area.")
+    st.caption("PDF upload · or paste the paper text below")
+    pasted = st.text_area("Paste paper text", height=90, placeholder="Paste the paper text, including its reference list.", label_visibility="collapsed", key="home_pasted")
+    col1, col2 = st.columns([1, 3], vertical_alignment="center")
+    with col1:
+        max_claims = st.selectbox("Claims to review", [4, 6, 8, 10], index=2, label_visibility="collapsed")
+    with col2:
+        if st.button("Research claims", type="primary", use_container_width=True, disabled=(uploaded is None and not pasted.strip())):
+            run_analysis(uploaded, pasted, int(max_claims), settings, llm)
+            st.rerun()
+    st.caption("Your PDF stays in this session. CiteVerify checks claims against resolved source evidence; it does not replace human review.")
+
 
 
 def main() -> None:
@@ -818,35 +656,23 @@ def main() -> None:
         page_title="CiteVerify — evidence, not verdicts",
         page_icon="✓",
         layout="wide",
-        initial_sidebar_state="expanded",
+        initial_sidebar_state="collapsed",
     )
     init_state()
     inject_css(dark=st.session_state.get("dark_mode", False))
     settings = get_settings()
     llm = LLMClient(settings)
-
-    mode, uploaded, pasted, max_claims, analyze_clicked = render_sidebar(settings, llm)
-
-    if mode == "Demo report":
-        if st.session_state.report_mode != "demo":
-            try:
-                st.session_state.report = load_demo_report(settings.demo_report_path)
-                st.session_state.report_mode = "demo"
-            except Exception as exc:
-                st.error(str(exc))
-                st.session_state.report = None
-    elif st.session_state.report_mode == "demo":
-        st.session_state.report = st.session_state.get("live_report")
-        st.session_state.report_mode = "live" if st.session_state.report else None
-
-    if analyze_clicked:
-        run_analysis(uploaded, pasted, max_claims, settings, llm)
-
+    render_topbar()
     report = st.session_state.get("report")
     if report is None:
-        render_empty_state()
+        render_empty_state(settings, llm)
     else:
         render_report(report, settings, llm)
+
+
+if __name__ == "__main__":
+    main()
+
 
 
 if __name__ == "__main__":
