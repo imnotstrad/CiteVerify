@@ -67,6 +67,8 @@ def inject_css(dark: bool = False) -> None:
         "success_text": "#B7F0C8" if dark else "#166534",
         "warning_bg": "#49391B" if dark else "#FEF3C7",
         "warning_text": "#F8D98A" if dark else "#92400E",
+        "unsupported_bg": "#49301D" if dark else "#FFEDD5",
+        "unsupported_text": "#FFD6A8" if dark else "#9A3412",
         "error_bg": "#482629" if dark else "#FEE2E2",
         "error_text": "#FFC1C1" if dark else "#991B1B",
         "info_bg": "#193744" if dark else "#DBEAFE",
@@ -86,6 +88,7 @@ def inject_css(dark: bool = False) -> None:
       --cv-soft-text:{palette["soft_text"]}; --cv-input:{palette["input"]};
       --cv-success-bg:{palette["success_bg"]}; --cv-success-text:{palette["success_text"]};
       --cv-warning-bg:{palette["warning_bg"]}; --cv-warning-text:{palette["warning_text"]};
+      --cv-unsupported-bg:{palette["unsupported_bg"]}; --cv-unsupported-text:{palette["unsupported_text"]};
       --cv-error-bg:{palette["error_bg"]}; --cv-error-text:{palette["error_text"]};
       --cv-info-bg:{palette["info_bg"]}; --cv-info-text:{palette["info_text"]};
       --cv-neutral-bg:{palette["neutral_bg"]}; --cv-neutral-text:{palette["neutral_text"]};
@@ -121,7 +124,7 @@ def inject_css(dark: bool = False) -> None:
     .verdict-badge {{display:inline-block;padding:.32rem .72rem;border-radius:999px;font-size:.68rem;font-weight:700;text-transform:uppercase;}}
     .verdict-supported {{background:var(--cv-success-bg);color:var(--cv-success-text)!important;}}
     .verdict-partially_supported {{background:var(--cv-warning-bg);color:var(--cv-warning-text)!important;}}
-    .verdict-unsupported {{background:#4A321E;color:#FFE0B2!important;}}
+    .verdict-unsupported {{background:var(--cv-unsupported-bg);color:var(--cv-unsupported-text)!important;}}
     .verdict-contradicted {{background:var(--cv-error-bg);color:var(--cv-error-text)!important;}}
     .verdict-unverifiable {{background:var(--cv-neutral-bg);color:var(--cv-neutral-text)!important;}}
     .quote {{border-left:3px solid var(--cv-accent);padding:.8rem 1rem;background:var(--cv-soft);color:var(--cv-soft-text)!important;font-style:italic;border-radius:0 10px 10px 0;line-height:1.6;}}
