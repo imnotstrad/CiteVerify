@@ -1038,6 +1038,34 @@ EXTRA_CSS = """
 @keyframes cvpulse {0%,100%{opacity:.25;}50%{opacity:1;}}
 [data-testid="stFileUploaderDropzone"] {padding:2.2rem 1.5rem!important;transition:border-color .15s,background .15s;}
 [data-testid="stFileUploaderDropzone"]:hover {border-color:var(--cv-accent)!important;border-style:solid!important;}
+/* About us (popover trigger): cover every selector Streamlit versions use */
+[data-testid="stPopover"] button,
+[data-testid="stPopoverButton"],
+div[data-testid="stPopover"] > div > button,
+[data-testid="stPopover"] [data-baseweb="button"] {
+  background:var(--cv-panel-alt)!important;
+  background-color:var(--cv-panel-alt)!important;
+  color:var(--cv-text)!important;
+  border:1px solid var(--cv-border-strong)!important;
+  opacity:1!important;
+}
+[data-testid="stPopover"] button *,
+[data-testid="stPopoverButton"] * {
+  color:var(--cv-text)!important;
+  fill:var(--cv-text)!important;
+  opacity:1!important;
+}
+[data-testid="stPopover"] button:hover,
+[data-testid="stPopover"] button:focus,
+[data-testid="stPopoverButton"]:hover,
+[data-testid="stPopoverButton"]:focus {
+  background:var(--cv-panel)!important;
+  background-color:var(--cv-panel)!important;
+  border-color:var(--cv-accent)!important;
+  color:var(--cv-accent)!important;
+}
+[data-testid="stPopover"] button:hover *,
+[data-testid="stPopoverButton"]:hover * {color:var(--cv-accent)!important;fill:var(--cv-accent)!important;}
 /* Surfaces: visible edges and a little depth */
 [data-testid="stVerticalBlockBorderWrapper"] {border-color:var(--cv-border-strong)!important;box-shadow:var(--cv-shadow);}
 [data-testid="stExpander"],.summary-card,[data-testid="stAlert"] {border-color:var(--cv-border-strong)!important;}
