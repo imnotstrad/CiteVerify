@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
@@ -26,12 +27,35 @@ class LLMError(RuntimeError):
     """Raised when the model cannot return valid structured output."""
 
 
+RETRYABLE_STATUS = {408, 409, 429, 500, 502, 503, 504}
+
+RETRYABLE_MARKERS = (
+    "rate limit",
+    "rate_limit",
+    "quota",
+    "timeout",
+    "timed out",
+    "overloaded",
+    "temporarily unavailable",
+    "service unavailable",
+)
+
+
 def _strip_code_fence(text: str) -> str:
     text = text.strip()
     if text.startswith("```"):
         text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
         text = re.sub(r"\s*```$", "", text)
     return text.strip()
+
+
+def is_retryable_error(exc: Exception) -> bool:
+    """True for transport, quota, and rate-limit errors worth backing off on."""
+    status = getattr(exc, "status_code", None)
+    if isinstance(status, int) and status in RETRYABLE_STATUS:
+        return True
+    message = str(exc).casefold()
+    return any(marker in message for marker in RETRYABLE_MARKERS)
 
 
 def parse_json_object(text: str) -> dict:
@@ -87,7 +111,7 @@ class LLMClient:
         ]
         last_error: Exception | None = None
 
-        for _ in range(max_attempts):
+        for attempt in range(1, max_attempts + 1):
             raw = ""
             try:
                 response = client.chat.completions.create(
@@ -115,6 +139,10 @@ class LLMClient:
                 )
             except Exception as exc:  # API/network errors
                 last_error = exc
+                # Free tiers rate-limit hard; backing off beats losing a verdict.
+                if is_retryable_error(exc) and attempt < max_attempts:
+                    time.sleep(min(2 ** (attempt - 1), 8))
+                    continue
                 break
 
         raise LLMError(f"The model did not return usable JSON: {last_error}")
