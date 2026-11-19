@@ -43,7 +43,7 @@ VERDICT_CLASS = {
 SUMMARY_SPECS = [
     ("total", "Claims", "total"),
     ("supported", "Supported", "supported"),
-    ("partially_supported", "Partial", "partially_supported"),
+    ("partially_supported", "Partially supported", "partially_supported"),
     ("unsupported", "Unsupported", "unsupported"),
     ("contradicted", "Contradicted", "contradicted"),
     ("unverifiable", "Unverifiable", "unverifiable"),
@@ -54,16 +54,17 @@ DEMO_RETRACTED_DOI = "10.1016/S0140-6736(97)11096-0"
 
 def inject_css(dark: bool = False) -> None:
     palette = {
-        "bg": "#0D1217" if dark else "#F7F3EA",
-        "panel": "#161E25" if dark else "#FFFDF7",
-        "panel_alt": "#1F2933" if dark else "#F0EBE1",
-        "text": "#EAF0F3" if dark else "#172026",
-        "muted": "#A9B6BF" if dark else "#5B6570",
-        "border": "#34424D" if dark else "#E4DACB",
-        "accent": "#5EDCC8" if dark else "#0F766E",
-        "soft": "#12302E" if dark else "#F0FDFA",
-        "soft_text": "#CDF5EE" if dark else "#134E4A",
-        "input": "#10171D" if dark else "#FFFFFF",
+        "bg": "#0A0F13" if dark else "#F5F1E8",
+        "panel": "#121A20" if dark else "#FFFCF5",
+        "panel_alt": "#1A242B" if dark else "#ECE6DA",
+        "text": "#EEF3F4" if dark else "#172126",
+        "muted": "#A6B4BB" if dark else "#5C6870",
+        "border": "#2D3A42" if dark else "#DED5C7",
+        "accent": "#63E0CB" if dark else "#0E6F66",
+        "accent_contrast": "#071A18" if dark else "#FFFFFF",
+        "soft": "#102D2A" if dark else "#E9F6F2",
+        "soft_text": "#C8F5ED" if dark else "#0F4F49",
+        "input": "#0E161B" if dark else "#FFFFFF",
         "success_bg": "#12382A" if dark else "#DCFCE7",
         "success_text": "#B7F0C8" if dark else "#166534",
         "warning_bg": "#42340F" if dark else "#FEF3C7",
@@ -76,8 +77,8 @@ def inject_css(dark: bool = False) -> None:
         "info_text": "#B9E4F4" if dark else "#1E40AF",
         "neutral_bg": "#2E3A43" if dark else "#E5E7EB",
         "neutral_text": "#E2E8EC" if dark else "#374151",
-        "border_strong": "#4A5A67" if dark else "#CDBFA6",
-        "shadow": "0 8px 28px rgba(0,0,0,.45)" if dark else "0 6px 22px rgba(60,45,20,.08)",
+        "border_strong": "#43535D" if dark else "#C9BCA8",
+        "shadow": "0 18px 50px rgba(0,0,0,.45)" if dark else "0 14px 40px rgba(36,28,15,.08)",
         "mark_bg": "#6A5410" if dark else "#FFF3A3",
         "best_bg": "#8A6D0B" if dark else "#FFE082",
         "mark_text": "#FFF6D6" if dark else "#172026",
@@ -90,8 +91,11 @@ def inject_css(dark: bool = False) -> None:
       --cv-bg:{palette["bg"]}; --cv-panel:{palette["panel"]};
       --cv-panel-alt:{palette["panel_alt"]}; --cv-text:{palette["text"]};
       --cv-muted:{palette["muted"]}; --cv-border:{palette["border"]};
-      --cv-accent:{palette["accent"]}; --cv-soft:{palette["soft"]};
+      --cv-accent:{palette["accent"]}; --cv-accent-contrast:{palette["accent_contrast"]};
+      --cv-soft:{palette["soft"]};
       --cv-soft-text:{palette["soft_text"]}; --cv-input:{palette["input"]};
+      --cv-serif:'Source Serif 4',Georgia,serif;
+      --cv-sans:Inter,system-ui,sans-serif;
       --cv-success-bg:{palette["success_bg"]}; --cv-success-text:{palette["success_text"]};
       --cv-warning-bg:{palette["warning_bg"]}; --cv-warning-text:{palette["warning_text"]};
       --cv-unsupported-bg:{palette["unsupported_bg"]}; --cv-unsupported-text:{palette["unsupported_text"]};
@@ -108,7 +112,7 @@ def inject_css(dark: bool = False) -> None:
       color:var(--cv-text)!important;
       font-family:Inter,system-ui,sans-serif;
     }}
-    .block-container {{max-width:1000px;padding-top:1.2rem;padding-bottom:3rem;}}
+    .block-container {{max-width:1120px;padding-top:1.1rem;padding-bottom:3.5rem;}}
     [data-testid="stSidebar"], [data-testid="collapsedControl"] {{display:none!important;}}
     header[data-testid="stHeader"] {{background:transparent!important;}}
     h1,h2,h3,h4,p,li,label,
@@ -139,7 +143,7 @@ def inject_css(dark: bool = False) -> None:
     .verdict-contradicted {{background:var(--cv-error-bg);color:var(--cv-error-text)!important;}}
     .verdict-unverifiable {{background:var(--cv-neutral-bg);color:var(--cv-neutral-text)!important;}}
     .quote {{border-left:3px solid var(--cv-accent);padding:.8rem 1rem;background:var(--cv-soft);color:var(--cv-soft-text)!important;font-style:italic;border-radius:0 10px 10px 0;line-height:1.6;}}
-    .hl-passage,[data-testid="stVerticalBlockBorderWrapper"] {{background:var(--cv-panel)!important;border:1px solid var(--cv-border)!important;border-radius:16px;}}
+    .hl-passage,.st-key-cv_claim_card,.st-key-cv_export_card,.st-key-cv_reading_card {{background:var(--cv-panel)!important;border:1px solid var(--cv-border)!important;border-radius:16px;}}
     .hl-passage mark {{background:#FFF3A3;color:#172026!important;padding:0 2px;border-radius:3px;}}
     .hl-passage .best {{background:#FFE082;color:#172026!important;padding:2px 3px;border-radius:4px;}}
 
@@ -153,10 +157,15 @@ def inject_css(dark: bool = False) -> None:
       background:var(--cv-panel)!important;
       color:var(--cv-text)!important;
     }}
-    [data-testid="stButton"] button[kind="primary"] {{
+    [data-testid="stButton"] button[kind="primary"],
+    [data-testid="stDownloadButton"] button[kind="primary"] {{
       background:var(--cv-accent)!important;
-      color:#071A18!important;
+      color:var(--cv-accent-contrast)!important;
       border-color:var(--cv-accent)!important;
+    }}
+    [data-testid="stButton"] button[kind="primary"] *,
+    [data-testid="stDownloadButton"] button[kind="primary"] * {{
+      color:var(--cv-accent-contrast)!important;
     }}
     [data-testid="stButton"] button:disabled {{color:var(--cv-muted)!important;opacity:.55;}}
     [data-testid="stPopover"] > button:hover,
@@ -324,23 +333,34 @@ def confidence_label(result: ClaimResult) -> str:
 
 
 def render_topbar() -> None:
-    left, center, right = st.columns([1.2, 4.6, 1.5], vertical_alignment="center")
-    with left:
-        st.toggle("Dark mode", key="dark_mode", help="Switch between dark and light appearance.")
-    with center:
-        st.markdown('<div class="cv-topbar"><div class="cv-brand">CiteVerify</div></div>', unsafe_allow_html=True)
-    with right:
-        with st.popover("About us", width="stretch"):
+    with st.container(key="cv_topbar"):
+        left, right = st.columns([5, 1.2], vertical_alignment="center")
+        with left:
             st.markdown(
                 """
-                <div class="cv-about-panel">
-                  <h3>About CiteVerify</h3>
-                  <p>Researchers cite papers that often do not say what the citing sentence claims. Existing tools check whether a reference exists or is formatted correctly; CiteVerify checks <strong>claim support</strong>.</p>
-                  <p>For each cited claim, it produces a verdict, a verbatim evidence quote, a confidence label, a DOI/source link, an optional suggested fix, and flags such as retracted.</p>
-                  <p><strong>The design rule is simple: no verbatim quote, no verdict.</strong> If the source text is insufficient, the claim is marked unverifiable.</p>
+                <div class="cv-brand-lockup">
+                  <span class="cv-mark" aria-hidden="true">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.1"
+                         stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 4h9l5 5v11H5z"></path>
+                      <path d="M14 4v5h5"></path>
+                      <path d="M8.6 14.2l2.2 2.2 4.4-4.4"></path>
+                    </svg>
+                  </span>
+                  <span>
+                    <span class="cv-brand">CiteVerify</span>
+                    <span class="cv-brand-sub">Evidence, not verdicts</span>
+                  </span>
                 </div>
                 """,
                 unsafe_allow_html=True,
+            )
+        with right:
+            st.toggle(
+                "Dark mode",
+                key="dark_mode",
+                help="Switch between dark and light appearance.",
             )
 
 
@@ -485,15 +505,16 @@ def analyze_pending(pending: dict, settings: Settings, llm: LLMClient, slot) -> 
 
 
 def render_reading(settings: Settings, llm: LLMClient) -> None:
-    render_header("Reading & extracting claims", "This usually takes under a minute.", "Working on it")
+    render_header("Reading the paper", "This usually takes under a minute.", "Working on it")
     error = st.session_state.analysis_error
     if error:
         st.error(error)
         st.button("← Try another paper", key="retry_home", type="primary", on_click=go_home)
         return
 
-    slot = st.empty()
-    render_steps(slot, 0)
+    with st.container(border=True, key="cv_reading_card"):
+        slot = st.empty()
+        render_steps(slot, 0)
     st.button("Cancel", key="cancel_analysis", on_click=go_home)
 
     try:
@@ -526,21 +547,49 @@ def render_header(title: str, subtitle: str, kicker: str = "Citation forensics")
 
 
 def render_summary(report: Report) -> None:
+    """A compact, readable verdict distribution. No metric wall."""
     counts = report.summary
-    columns = st.columns(len(SUMMARY_SPECS))
-    for column, (key, label, css_class) in zip(columns, SUMMARY_SPECS):
-        with column:
-            st.markdown(
-                f"""
-                <div class="summary-card {css_class}">
-                  <div class="summary-value">{counts.get(key, 0)}</div>
-                  <div class="summary-label">{html.escape(label)}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    total = counts.get("total") or len(report.results)
+    if not total:
+        return
+
+    segments: list[str] = []
+    legend: list[str] = []
+    spoken: list[str] = []
+    for key, label, css_class in SUMMARY_SPECS:
+        if key == "total":
+            continue
+        count = counts.get(key, 0)
+        if not count:
+            continue
+        width = 100 * count / total
+        segments.append(
+            f'<span class="cv-seg-{css_class}" style="width:{width:.2f}%"></span>'
+        )
+        legend.append(
+            f'<span class="cv-legend-item"><span class="cv-dot cv-dot-{css_class}"></span>'
+            f"{count} {html.escape(label.lower())}</span>"
+        )
+        spoken.append(f"{count} {label.lower()}")
+
+    st.markdown(
+        f"""
+        <div class="cv-summary">
+          <div class="cv-summary-top">
+            <span class="cv-summary-label">Verdict distribution</span>
+            <span class="cv-summary-total">{total} claims</span>
+          </div>
+          <div class="cv-summary-bar" role="img"
+               aria-label="{html.escape(', '.join(spoken))}">
+            {''.join(segments)}
+          </div>
+          <div class="cv-summary-legend">{''.join(legend)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     if counts.get("flagged"):
-        st.caption(f"{counts['flagged']} claim(s) carry a source or evidence flag.")
+        st.caption(f"{counts['flagged']} claims carry a source or evidence flag.")
 
 
 def render_highlighted_evidence(result: ClaimResult) -> None:
@@ -549,7 +598,7 @@ def render_highlighted_evidence(result: ClaimResult) -> None:
     if not abstract.strip():
         return
     matches = find_evidence(result.claim.text, abstract, top_k=1)
-    with st.expander("Highlighted evidence in the source abstract"):
+    with st.expander("Highlighted evidence in the abstract"):
         if not matches:
             st.caption("No overlapping terms between the claim and this abstract.")
             return
@@ -607,33 +656,30 @@ def render_claim(
     settings: Settings,
     llm: LLMClient,
 ) -> None:
-    with st.container(border=True):
-        left, right = st.columns([5, 2])
-        with left:
-            st.markdown(
-                f'<div class="claim-card-eyebrow">Claim {index} of {total} · '
-                f'{html.escape(result.claim.section)} · '
-                f'{html.escape(result.claim.citation_marker or "Citation not mapped")}</div>',
-                unsafe_allow_html=True,
-            )
-        with right:
-            st.markdown(verdict_badge(result), unsafe_allow_html=True)
-            st.markdown(
-                f'<div class="confidence-note">Confidence: '
-                f'{html.escape(confidence_label(result))}</div>',
-                unsafe_allow_html=True,
-            )
-
-        st.markdown(
-            f'<div class="claim-card-title">{html.escape(result.claim.text)}</div>',
-            unsafe_allow_html=True,
-        )
-
+    with st.container(border=True, key="cv_claim_card"):
         source_title = result.source_title or "Unknown source"
         source_year = f" ({result.source_year})" if result.source_year else ""
+        section = result.claim.section or "Section not mapped"
+        marker = result.claim.citation_marker or "Citation not mapped"
+
         st.markdown(
-            f'<div class="source-line">Cited source: {html.escape(source_title)}'
-            f'{html.escape(source_year)}</div>',
+            f"""
+            <div class="cv-claim-head">
+              <div>
+                <div class="cv-claim-meta">Claim {index:02d} of {total:02d}</div>
+                <div class="cv-claim-context">{html.escape(section)} · {html.escape(marker)}</div>
+              </div>
+              <div class="cv-claim-verdict">
+                {verdict_badge(result)}
+                <div class="cv-confidence">Confidence: {html.escape(confidence_label(result))}</div>
+              </div>
+            </div>
+            <div class="cv-claim-title">{html.escape(result.claim.text)}</div>
+            <div class="cv-source">
+              <span class="cv-source-label">Cited source</span>
+              <span class="cv-source-title">{html.escape(source_title)}{html.escape(source_year)}</span>
+            </div>
+            """,
             unsafe_allow_html=True,
         )
 
@@ -652,31 +698,49 @@ def render_claim(
                     unsafe_allow_html=True,
                 )
 
-        st.markdown("**Evidence from the source**")
+        st.markdown('<div class="cv-section-label">Evidence from the source</div>', unsafe_allow_html=True)
         if result.evidence_quote:
             st.markdown(
-                f'<div class="quote">“{html.escape(result.evidence_quote)}”</div>',
+                f'<blockquote class="cv-quote">“{html.escape(result.evidence_quote)}”</blockquote>',
                 unsafe_allow_html=True,
             )
         else:
-            st.caption("No verbatim quote was found. This claim is marked unverifiable.")
+            st.markdown(
+                '<div class="cv-empty-quote">No verbatim quote was found. '
+                "This claim is marked unverifiable.</div>",
+                unsafe_allow_html=True,
+            )
 
         if result.reason:
-            st.markdown("**Why this verdict?**")
-            st.write(result.reason)
+            st.markdown('<div class="cv-section-label">Why this verdict</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="cv-reason">{html.escape(result.reason)}</div>', unsafe_allow_html=True)
         if result.suggested_fix:
-            st.info(f"**Suggested fix:** {result.suggested_fix}")
+            fix = html.escape(result.suggested_fix).replace("\n", "<br>")
+            st.markdown(
+                f'<div class="cv-fix"><div class="cv-fix-label">Suggested fix</div>'
+                f'<div class="cv-fix-text">{fix}</div></div>',
+                unsafe_allow_html=True,
+            )
 
         render_highlighted_evidence(result)
 
         action_left, action_middle, action_right = st.columns(
-            [3, 2, 2], vertical_alignment="center"
+            [3, 1.6, 1.2], vertical_alignment="center"
         )
         with action_left:
             if result.source_url:
-                st.markdown(f"[Open cited source ↗]({result.source_url})")
+                st.markdown(
+                    f'<div class="cv-action-link"><a href="{html.escape(result.source_url, quote=True)}" '
+                    'target="_blank" rel="noopener">Open cited source ↗</a></div>',
+                    unsafe_allow_html=True,
+                )
             elif result.reference and result.reference.doi:
-                st.markdown(f"[Open cited source ↗](https://doi.org/{result.reference.doi})")
+                st.markdown(
+                    f'<div class="cv-action-link"><a href="https://doi.org/'
+                    f'{html.escape(result.reference.doi, quote=True)}" target="_blank" '
+                    'rel="noopener">Open cited source ↗</a></div>',
+                    unsafe_allow_html=True,
+                )
             else:
                 st.caption("No source link available.")
         with action_middle:
@@ -685,6 +749,7 @@ def render_claim(
                 key=f"new_pdf_{result.claim.id}",
                 on_click=go_home,
                 help="Start over with a different paper.",
+                width="stretch",
             )
         with action_right:
             st.checkbox(
@@ -775,68 +840,85 @@ def render_claim(
 
 def render_export(report: Report) -> None:
     """Shown on the last claim: a PDF listing every claim with its suggested fix."""
-    with st.container(border=True):
-        st.markdown("#### That was the last claim")
-        st.caption(
-            "Get a PDF listing every claim with its suggested fix, plus corrected "
-            "reference formatting."
-        )
-        pdf_bytes = None
-        try:
-            pdf_bytes = build_fixes_pdf(report)
-        except PDFUnavailable as exc:
-            st.warning(f"{exc} The Markdown report below still works.")
-        except Exception as exc:  # never let export break the cards
-            st.error(f"Could not build the PDF: {exc}")
+    with st.container(border=True, key="cv_export_card"):
+        copy_col, download_col = st.columns([3, 2], vertical_alignment="center")
+        with copy_col:
+            st.markdown('<div class="cv-kicker">Review complete</div>', unsafe_allow_html=True)
+            st.markdown(
+                '<div class="cv-export-title">Take the fixes with you.</div>',
+                unsafe_allow_html=True,
+            )
+            st.caption(
+                "A PDF listing every claim, its suggested fix, and corrected "
+                "reference formatting."
+            )
+        with download_col:
+            pdf_bytes = None
+            try:
+                pdf_bytes = build_fixes_pdf(report)
+            except PDFUnavailable as exc:
+                st.warning(f"{exc} The Markdown report still works.")
+            except Exception as exc:  # never let export break the cards
+                st.error(f"Could not build the PDF: {exc}")
 
-        if pdf_bytes is not None:
-            st.download_button(
-                "Create PDF with suggested fixes",
-                data=pdf_bytes,
-                file_name="citeverify_suggested_fixes.pdf",
-                mime="application/pdf",
-                type="primary",
-                key="download_pdf",
-                width="stretch",
-            )
-        md_col, json_col = st.columns(2)
-        with md_col:
-            st.download_button(
-                "Download Markdown",
-                data=report_to_markdown(report),
-                file_name="citeverify_report.md",
-                mime="text/markdown",
-                key="download_md",
-                width="stretch",
-            )
-        with json_col:
-            st.download_button(
-                "Download JSON",
-                data=report_to_json(report),
-                file_name="citeverify_report.json",
-                mime="application/json",
-                key="download_json",
-                width="stretch",
-            )
+            if pdf_bytes is not None:
+                st.download_button(
+                    "Create PDF with suggested fixes",
+                    data=pdf_bytes,
+                    file_name="citeverify_suggested_fixes.pdf",
+                    mime="application/pdf",
+                    type="primary",
+                    key="download_pdf",
+                    width="stretch",
+                )
+
+        with st.expander("Download other formats"):
+            md_col, json_col = st.columns(2)
+            with md_col:
+                st.download_button(
+                    "Download Markdown",
+                    data=report_to_markdown(report),
+                    file_name="citeverify_report.md",
+                    mime="text/markdown",
+                    key="download_md",
+                    width="stretch",
+                )
+            with json_col:
+                st.download_button(
+                    "Download JSON",
+                    data=report_to_json(report),
+                    file_name="citeverify_report.json",
+                    mime="application/json",
+                    key="download_json",
+                    width="stretch",
+                )
 
 
 def render_report(report: Report, settings: Settings, llm: LLMClient) -> None:
-    if report.mode == "demo":
-        st.caption("Demo report · The citing paper is illustrative; the cited papers and abstracts are real.")
-    st.markdown(f'<div class="cv-hero"><div class="cv-kicker">Research review</div><div class="cv-title">{html.escape(report.paper_title)}</div><div class="cv-sub">Review one cited claim at a time.</div></div>', unsafe_allow_html=True)
     shown = report.results
+    demo = report.mode == "demo"
+    meta = (
+        '<span class="cv-demo-badge">Demo</span>'
+        "The citing paper is illustrative; the cited papers and abstracts are real."
+        if demo
+        else f"Live analysis of {len(shown)} cited claims"
+    )
+    st.markdown(
+        f"""
+        <div class="cv-report-head">
+          <div class="cv-kicker">Research review</div>
+          <div class="cv-report-title">{html.escape(report.paper_title)}</div>
+          <div class="cv-report-meta">{meta}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     if not shown:
         st.info("No claims were extracted from this paper.")
         st.button("Try a new PDF", key="new_pdf_empty", type="primary", on_click=go_home)
         return
 
-    chips = "".join(
-        f'<span class="verdict-badge verdict-{VERDICT_CLASS[verdict]}">'
-        f"{report.summary.get(verdict.value, 0)} {html.escape(VERDICT_LABELS[verdict])}</span>"
-        for verdict in Verdict
-        if report.summary.get(verdict.value, 0) > 0
-    )
-    st.markdown(f'<div class="cv-chips">{chips}</div>', unsafe_allow_html=True)
+    render_summary(report)
     seconds = st.session_state.get("verify_seconds")
     if seconds is not None:
         st.caption(f"Verification finished in {seconds:.1f} seconds.")
@@ -844,22 +926,24 @@ def render_report(report: Report, settings: Settings, llm: LLMClient) -> None:
     current_index = min(max(0, int(st.session_state.get("claim_index", 0))), len(shown)-1)
     render_claim(shown[current_index], current_index+1, len(shown), settings, llm)
 
-    # Card controls are deliberately placed directly beneath the flashcard.
-    st.markdown('<div class="cv-card-controls"></div>', unsafe_allow_html=True)
-    left, middle, right = st.columns([1, 5, 1], vertical_alignment="center")
+    # Card controls stay directly beneath the flashcard.
+    left, middle, right = st.columns([1.25, 3.5, 1.25], vertical_alignment="center")
     with left:
         previous_clicked = st.button(
-            "←",
+            "← Previous",
             key="previous_claim",
             help="First claim — there is no previous claim" if current_index == 0 else "Previous claim",
             disabled=current_index == 0,
             width="stretch",
         )
     with middle:
-        st.markdown(f'<div class="cv-counter">CLAIM {current_index+1:02d} / {len(shown):02d}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="cv-counter">Claim {current_index+1} of {len(shown)}</div>',
+            unsafe_allow_html=True,
+        )
     with right:
         next_clicked = st.button(
-            "→",
+            "Next →",
             key="next_claim",
             help="Last claim — there is no next claim" if current_index == len(shown) - 1 else "Next claim",
             disabled=current_index == len(shown) - 1,
@@ -921,7 +1005,7 @@ def render_evaluation(settings: Settings) -> None:
 
 
 def render_about(settings: Settings) -> None:
-    st.markdown("### What CiteVerify does")
+    st.markdown("### About CiteVerify")
     st.write(
         "It reads a paper, extracts claims that have citations, resolves each "
         "citation to its source, and asks a source-grounded model whether that "
@@ -956,16 +1040,11 @@ def render_about(settings: Settings) -> None:
         )
         st.markdown("#### Stack")
         st.caption(
-            "Python · Streamlit · PyMuPDF · Hugging Face sentence-transformers · "
-            "Crossref · OpenAlex · Pydantic · Gemini source-grounded verification"
+            "Python, Streamlit, PyMuPDF, Hugging Face sentence-transformers, "
+            "Crossref, OpenAlex, Pydantic, and Gemini source-grounded verification."
         )
     st.divider()
     render_deployment_diagnostics(settings)
-    st.divider()
-    st.caption(
-        "Built for INNOVEDGE Hackathon 2026. CiteVerify is evidence for human "
-        "review, not a final verdict on a paper."
-    )
 
 
 def render_deployment_diagnostics(settings: Settings) -> None:
@@ -998,150 +1077,327 @@ def render_deployment_diagnostics(settings: Settings) -> None:
 
 
 def render_empty_state(settings: Settings, llm: LLMClient) -> None:
-    render_header(
-        "Drop a paper. See which claims its sources support.",
-        "Drop a PDF anywhere in the box below, or paste the text.",
-    )
     if st.session_state.home_error:
         st.error(st.session_state.home_error)
-    if not settings.llm_configured:
-        st.warning(
-            "No LLM_API_KEY is configured, so new papers can't be analyzed yet. "
-            "You can still explore the demo report."
-        )
 
-    st.file_uploader(
-        "Drop your PDF here",
-        type=["pdf"],
-        key=f"home_pdf_{st.session_state.uploader_nonce}",
-        on_change=on_file_uploaded,
-        help="Choose a PDF or drag it into this upload area. Analysis starts right away.",
-    )
-    st.markdown('<div class="cv-or">or paste text</div>', unsafe_allow_html=True)
-    st.text_area(
-        "Paste paper text",
-        height=110,
-        placeholder="Paste the paper text, including its reference list.",
-        label_visibility="collapsed",
-        key="home_pasted",
-    )
-    col1, col2 = st.columns([1, 3], vertical_alignment="center")
-    with col1:
-        st.select_slider(
-            "Claims to review", options=[4, 6, 8, 10], value=8, key="max_claims_opt"
+    hero_col, upload_col = st.columns([1.1, 0.9], gap="large", vertical_alignment="center")
+    with hero_col:
+        st.markdown(
+            """
+            <div class="cv-hero">
+              <div class="cv-kicker">Evidence-first citation review</div>
+              <div class="cv-display">Does the source actually say that?</div>
+              <div class="cv-lede">
+                CiteVerify reads the cited claims in a paper, finds the sources,
+                and shows you the evidence behind every verdict.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-    with col2:
         st.button(
-            "Research claims",
+            "Try the demo report",
+            key="open_demo",
+            on_click=on_open_demo,
             type="primary",
-            width="stretch",
-            on_click=on_analyze_text,
-            key="analyze_text",
+            icon=":material/play_arrow:",
         )
-    st.button("Try the demo report (no key needed)", key="open_demo", on_click=on_open_demo)
-    st.caption("CiteVerify checks claims against resolved source evidence. It is designed to support human review, not replace it.")
+        st.markdown(
+            '<div class="cv-demo-note">No key needed. Ten claims, about 30 seconds.</div>',
+            unsafe_allow_html=True,
+        )
 
-    with st.expander("About, evaluation and diagnostics"):
+    with upload_col:
+        with st.container(border=True, key="cv_upload_card"):
+            st.markdown(
+                """
+                <div class="cv-card-kicker">Start a review</div>
+                <div class="cv-card-title">Check a paper</div>
+                <div class="cv-card-copy">Upload a PDF or paste text. We extract the cited claims and check each one against its source.</div>
+                """,
+                unsafe_allow_html=True,
+            )
+            pdf_tab, text_tab = st.tabs(["Upload a PDF", "Paste text"])
+            with pdf_tab:
+                st.file_uploader(
+                    "Upload a PDF",
+                    type=["pdf"],
+                    key=f"home_pdf_{st.session_state.uploader_nonce}",
+                    on_change=on_file_uploaded,
+                    help="Choose a PDF or drag it into this area. Analysis starts right away.",
+                    label_visibility="collapsed",
+                )
+                st.caption("PDF only, up to 200 MB. Analysis starts when you choose a file.")
+                if not settings.llm_configured:
+                    st.caption("Live uploads need an API key. The demo works without one.")
+            with text_tab:
+                st.text_area(
+                    "Paste paper text",
+                    height=110,
+                    placeholder="Paste the paper text, including its reference list.",
+                    label_visibility="collapsed",
+                    key="home_pasted",
+                )
+                control_col, action_col = st.columns([1, 1.35], vertical_alignment="bottom")
+                with control_col:
+                    st.select_slider(
+                        "Claims to review",
+                        options=[4, 6, 8, 10],
+                        value=8,
+                        key="max_claims_opt",
+                    )
+                with action_col:
+                    st.button(
+                        "Research claims",
+                        type="primary",
+                        width="stretch",
+                        on_click=on_analyze_text,
+                        key="analyze_text",
+                    )
+                if not settings.llm_configured:
+                    st.caption("Live analysis needs an API key. The demo works without one.")
+
+    st.markdown(
+        '<div class="cv-section-head" id="how-it-works">How a review works</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="cv-section-copy">One paper in, one claim at a time out. '
+        "Every verdict is anchored to a verbatim quote.</div>",
+        unsafe_allow_html=True,
+    )
+    step_one, step_two, step_three = st.columns(3, gap="large")
+    steps = [
+        (
+            step_one,
+            "01",
+            "Upload a paper",
+            "PDF or pasted text. We extract the claims that carry citations.",
+        ),
+        (
+            step_two,
+            "02",
+            "We find the sources",
+            "DOIs and titles are resolved through Crossref and OpenAlex.",
+        ),
+        (
+            step_three,
+            "03",
+            "You see the evidence",
+            "Each claim gets a verdict, a quote, and a link to the source.",
+        ),
+    ]
+    for column, number, title, copy in steps:
+        with column:
+            st.markdown(
+                f'<div class="cv-step"><div class="cv-step-index">{number}</div>'
+                f'<div class="cv-step-title">{html.escape(title)}</div>'
+                f'<div class="cv-step-copy">{html.escape(copy)}</div></div>',
+                unsafe_allow_html=True,
+            )
+
+    st.markdown(
+        '<div class="cv-principle"><strong>No quote, no verdict.</strong> '
+        "If the source text does not support a responsible check, the claim is "
+        "marked unverifiable.</div>",
+        unsafe_allow_html=True,
+    )
+
+    with st.expander("About CiteVerify, evaluation and diagnostics"):
         render_about(settings)
+    st.markdown(
+        '<div class="cv-footer">Built for INNOVEDGE Hackathon 2026. '
+        "CiteVerify is evidence for human review, not a final verdict on a paper.</div>",
+        unsafe_allow_html=True,
+    )
 
 
 EXTRA_CSS = """
 <style>
-.cv-or {text-align:center;color:var(--cv-muted)!important;font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;margin:.9rem 0 .4rem;}
-.cv-chips {display:flex;flex-wrap:wrap;gap:.4rem;margin:.1rem 0 .8rem;}
-.cv-counter {text-align:center;color:var(--cv-accent)!important;font-weight:700;letter-spacing:.08em;padding:.55rem 0;}
-.cv-steps {list-style:none;padding:0;margin:.6rem 0 .8rem;}
-.cv-steps li {display:flex;gap:.75rem;align-items:baseline;padding:.6rem 0;color:var(--cv-muted);border-bottom:1px solid var(--cv-border);}
-.cv-steps li .dot {width:1.3rem;text-align:center;font-weight:700;}
+/* ---------- Page shell ---------- */
+.block-container {padding-top:1.1rem!important;}
+[data-testid="stAppViewContainer"] > .main {background:var(--cv-bg);}
+[data-testid="stHeader"] {background:transparent!important;}
+[data-testid="stToolbar"] {right:1rem;}
+body, [data-testid="stMarkdownContainer"] p {line-height:1.6;}
+
+/* ---------- Top bar ---------- */
+.st-key-cv_topbar {border-bottom:1px solid var(--cv-border);padding-bottom:.85rem;margin-bottom:1.8rem;}
+.st-key-cv_topbar [data-testid="stColumn"]:last-child {display:flex;justify-content:flex-end;align-items:center;}
+.cv-brand-lockup {display:flex;align-items:center;gap:.7rem;}
+.cv-mark {display:grid;place-items:center;width:2.15rem;height:2.15rem;border-radius:10px;background:var(--cv-accent);color:var(--cv-accent-contrast);flex:0 0 auto;box-shadow:0 4px 12px rgba(0,0,0,.08);}
+.cv-brand {display:block;font-family:var(--cv-serif);font-size:1.5rem;font-weight:700;letter-spacing:-.025em;line-height:1;color:var(--cv-text);}
+.cv-brand-sub {display:block;font-size:.72rem;line-height:1.2;color:var(--cv-muted);margin-top:.2rem;}
+.st-key-cv_topbar [data-testid="stCheckbox"] label p {font-size:.8rem!important;color:var(--cv-muted)!important;}
+.st-key-cv_topbar [data-testid="stCheckbox"] {margin:0!important;}
+.st-key-cv_topbar [data-testid="stCheckbox"] label > div:first-of-type {background:var(--cv-border-strong)!important;}
+.st-key-cv_topbar [data-testid="stCheckbox"] label > div:first-of-type > div {background:var(--cv-panel)!important;}
+.st-key-cv_topbar [data-testid="stCheckbox"] label:has(input:checked) > div:first-of-type {background:var(--cv-accent)!important;}
+.st-key-cv_topbar [data-testid="stCheckbox"] label:has(input:checked) > div:first-of-type > div {background:var(--cv-accent-contrast)!important;}
+
+/* ---------- Hero ---------- */
+.cv-hero {border:0!important;padding:0!important;margin:0!important;}
+.cv-kicker {color:var(--cv-accent)!important;font-size:.76rem;font-weight:700;letter-spacing:.035em;text-transform:none;}
+.cv-display {font-family:var(--cv-serif);font-size:clamp(2.5rem,4.8vw,4.1rem);font-weight:600;line-height:1.02;letter-spacing:-.035em;color:var(--cv-text);margin:.5rem 0 1rem;max-width:12ch;}
+.cv-lede {font-size:1.05rem;line-height:1.7;color:var(--cv-muted)!important;max-width:52ch;margin:0 0 1.15rem;}
+.cv-demo-note {color:var(--cv-muted)!important;font-size:.78rem;margin-top:.35rem;}
+.cv-hero .stButton button {min-height:3rem!important;padding:0 1.25rem!important;font-size:.95rem!important;}
+.cv-hero .stButton {margin-top:.1rem;}
+
+/* ---------- Upload card ---------- */
+.st-key-cv_upload_card {background:var(--cv-panel)!important;border:1px solid var(--cv-border)!important;border-radius:20px!important;box-shadow:var(--cv-shadow);padding:1.15rem 1.15rem .85rem!important;}
+.cv-card-kicker {font-size:.72rem;font-weight:600;letter-spacing:.01em;color:var(--cv-accent);}
+.cv-card-title {font-family:var(--cv-serif);font-size:1.65rem;font-weight:600;line-height:1.15;color:var(--cv-text);margin:.25rem 0 .3rem;}
+.cv-card-copy {font-size:.88rem;line-height:1.55;color:var(--cv-muted);margin:0 0 .65rem;}
+.st-key-cv_upload_card [data-testid="stFileUploaderDropzone"] {padding:1.7rem 1.1rem!important;border-radius:13px!important;background:var(--cv-panel-alt)!important;transition:border-color .15s,background .15s;}
+.st-key-cv_upload_card [data-testid="stFileUploaderDropzone"]:hover {border-color:var(--cv-accent)!important;border-style:solid!important;background:var(--cv-soft)!important;}
+.st-key-cv_upload_card [data-testid="stFileUploaderDropzone"] p,
+.st-key-cv_upload_card [data-testid="stFileUploaderDropzone"] span {font-size:.9rem!important;}
+.st-key-cv_upload_card [data-testid="stFileUploader"] {margin-bottom:.1rem;}
+.st-key-cv_upload_card [data-testid="stCaptionContainer"] {margin-top:.35rem;}
+.st-key-cv_upload_card [data-testid="stTabs"] {margin-top:.25rem;}
+
+/* ---------- Tabs as a segmented control ---------- */
+[data-testid="stTabs"] > div[data-orientation="horizontal"] {gap:.2rem;background:var(--cv-panel-alt);padding:.22rem;border-radius:10px;border:1px solid var(--cv-border);}
+[data-testid="stTab"] {border-radius:8px!important;padding:.48rem .8rem!important;font-size:.85rem!important;font-weight:600!important;color:var(--cv-muted)!important;background:transparent!important;outline:none!important;}
+[data-testid="stTab"][aria-selected="true"] {background:var(--cv-panel)!important;color:var(--cv-text)!important;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+[data-testid="stTab"] p {font-size:.85rem!important;font-weight:600!important;}
+[data-testid="stTab"][aria-selected="true"] p {color:var(--cv-text)!important;}
+[data-testid="stTab"] .react-aria-SelectionIndicator {display:none!important;}
+[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+[data-testid="stTabs"] [data-baseweb="tab-border"] {display:none!important;}
+
+/* ---------- How it works ---------- */
+.cv-section-head {font-family:var(--cv-serif);font-size:1.7rem;font-weight:600;line-height:1.2;color:var(--cv-text);margin:2.3rem 0 .4rem;letter-spacing:-.015em;}
+.cv-section-copy {font-size:.92rem;line-height:1.6;color:var(--cv-muted);max-width:62ch;margin:0 0 1.15rem;}
+.cv-step {border-top:1px solid var(--cv-border);padding-top:.8rem;height:100%;}
+.cv-step-index {font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--cv-accent);}
+.cv-step-title {font-size:1rem;font-weight:600;line-height:1.35;color:var(--cv-text);margin:.3rem 0 .2rem;}
+.cv-step-copy {font-size:.87rem;line-height:1.55;color:var(--cv-muted);}
+.cv-principle {margin:1.65rem 0 1.4rem;padding:.9rem 1.05rem;border-left:3px solid var(--cv-accent);border-radius:0 12px 12px 0;background:var(--cv-soft);color:var(--cv-soft-text)!important;font-size:.92rem;line-height:1.6;}
+.cv-principle strong {color:var(--cv-soft-text)!important;}
+.cv-footer {margin-top:1.8rem;color:var(--cv-muted)!important;font-size:.78rem;line-height:1.55;}
+
+/* ---------- Report header and summary ---------- */
+.cv-report-head {margin:0 0 1.15rem;}
+.cv-report-title {font-family:var(--cv-serif);font-size:clamp(2.05rem,3.8vw,3rem);font-weight:600;line-height:1.08;letter-spacing:-.03em;color:var(--cv-text);margin:.35rem 0 .45rem;max-width:24ch;}
+.cv-report-meta {font-size:.85rem;line-height:1.5;color:var(--cv-muted);}
+.cv-demo-badge {display:inline-block;margin-right:.4rem;padding:.16rem .5rem;border-radius:999px;background:var(--cv-soft);color:var(--cv-soft-text);font-size:.68rem;font-weight:700;vertical-align:.05em;}
+.cv-summary {margin:.35rem 0 1.45rem;}
+.cv-summary-top {display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:.45rem;}
+.cv-summary-label {font-size:.74rem;font-weight:600;letter-spacing:.01em;color:var(--cv-muted);}
+.cv-summary-total {font-size:.8rem;color:var(--cv-muted);}
+.cv-summary-bar {display:flex;gap:2px;height:9px;border-radius:999px;overflow:hidden;background:var(--cv-panel-alt);}
+.cv-summary-bar span {display:block;height:100%;min-width:3px;}
+.cv-seg-supported {background:var(--cv-success-text);}
+.cv-seg-partially_supported {background:var(--cv-warning-text);}
+.cv-seg-unsupported {background:var(--cv-unsupported-text);}
+.cv-seg-contradicted {background:var(--cv-error-text);}
+.cv-seg-unverifiable {background:var(--cv-neutral-text);}
+.cv-summary-legend {display:flex;flex-wrap:wrap;gap:.35rem 1rem;margin-top:.55rem;font-size:.78rem;color:var(--cv-muted);}
+.cv-legend-item {display:inline-flex;align-items:center;gap:.35rem;white-space:nowrap;}
+.cv-dot {display:inline-block;width:.5rem;height:.5rem;border-radius:999px;flex:0 0 auto;}
+.cv-dot-supported {background:var(--cv-success-text);}
+.cv-dot-partially_supported {background:var(--cv-warning-text);}
+.cv-dot-unsupported {background:var(--cv-unsupported-text);}
+.cv-dot-contradicted {background:var(--cv-error-text);}
+.cv-dot-unverifiable {background:var(--cv-neutral-text);}
+
+/* ---------- Claim card ---------- */
+.st-key-cv_claim_card,.st-key-cv_export_card,.st-key-cv_reading_card {border:1px solid var(--cv-border)!important;border-radius:18px!important;box-shadow:var(--cv-shadow);background:var(--cv-panel)!important;padding:1.15rem 1.2rem!important;}
+.st-key-cv_claim_card > div,.st-key-cv_export_card > div,.st-key-cv_reading_card > div {padding:0!important;}
+.cv-claim-head {display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.65rem;}
+.cv-claim-meta {font-size:.74rem;font-weight:600;letter-spacing:.01em;color:var(--cv-muted);}
+.cv-claim-context {font-size:.77rem;color:var(--cv-muted);margin-top:.2rem;}
+.cv-claim-verdict {display:flex;flex-direction:column;align-items:flex-end;gap:.25rem;text-align:right;}
+.cv-confidence {font-size:.74rem;color:var(--cv-muted);}
+.cv-claim-title {font-family:var(--cv-serif);font-size:clamp(1.45rem,2.3vw,1.95rem);font-weight:600;line-height:1.3;letter-spacing:-.015em;color:var(--cv-text);margin:.55rem 0 .9rem;max-width:34ch;}
+.cv-source {display:flex;flex-direction:column;gap:.15rem;padding:.65rem .8rem;margin:0 0 1rem;background:var(--cv-panel-alt);border-radius:10px;}
+.cv-source-label {font-size:.7rem;font-weight:600;letter-spacing:.01em;color:var(--cv-muted);}
+.cv-source-title {font-size:.9rem;line-height:1.45;color:var(--cv-text);}
+.cv-section-label {font-size:.74rem;font-weight:600;letter-spacing:.01em;color:var(--cv-muted);margin:1.15rem 0 .45rem;}
+.cv-quote {margin:0;padding:1rem 1.1rem;border-left:3px solid var(--cv-accent);border-radius:0 12px 12px 0;background:var(--cv-soft);color:var(--cv-soft-text)!important;font-family:var(--cv-serif);font-size:1.06rem;line-height:1.65;}
+.cv-empty-quote {padding:.85rem 1rem;border:1px dashed var(--cv-border);border-radius:10px;color:var(--cv-muted);font-size:.88rem;line-height:1.55;}
+.cv-reason {margin:0;font-size:.94rem;line-height:1.65;color:var(--cv-text);}
+.cv-fix {margin:1.1rem 0 .2rem;padding:.85rem 1rem;border:1px solid var(--cv-border);border-left:3px solid var(--cv-accent);border-radius:10px;background:var(--cv-panel-alt);}
+.cv-fix-label {font-size:.72rem;font-weight:600;letter-spacing:.01em;color:var(--cv-accent);}
+.cv-fix-text {margin-top:.25rem;font-size:.93rem;line-height:1.6;color:var(--cv-text);}
+
+/* ---------- Actions and navigation ---------- */
+.cv-action-link {font-size:.85rem;line-height:1.45;}
+.cv-action-link a {font-weight:600;}
+[data-testid="stButton"] button {font-weight:600!important;font-size:.88rem!important;border-radius:10px!important;}
+[data-testid="stButton"] button[kind="primary"] {box-shadow:0 6px 16px rgba(0,0,0,.1);}
+[data-testid="stButton"] button[kind="primary"]:hover:not(:disabled) {filter:brightness(1.06);background:var(--cv-accent)!important;}
+[data-testid="stButton"] button:disabled {border-style:dashed!important;background:var(--cv-panel-alt)!important;cursor:not-allowed;}
+.cv-counter {text-align:center;color:var(--cv-muted)!important;font-weight:600;font-size:.8rem;letter-spacing:.035em;padding:.55rem 0;}
+[data-testid="stProgress"] > div {height:4px!important;border-radius:999px!important;background:var(--cv-border)!important;}
+[data-testid="stProgress"] > div > div {background:var(--cv-accent)!important;border-radius:999px!important;}
+.cv-export-title {font-family:var(--cv-serif);font-size:1.65rem;font-weight:600;line-height:1.2;letter-spacing:-.02em;color:var(--cv-text);margin:.25rem 0 .35rem;}
+
+/* ---------- Reading state ---------- */
+.cv-steps {list-style:none;padding:0;margin:.4rem 0 .5rem;}
+.cv-steps li {display:flex;gap:.8rem;align-items:baseline;padding:.62rem 0;color:var(--cv-muted);border-bottom:1px solid var(--cv-border);font-size:.92rem;}
+.cv-steps li:last-child {border-bottom:0;}
+.cv-steps li .dot {width:1.35rem;text-align:center;font-weight:700;color:var(--cv-border-strong);}
 .cv-steps li.done {color:var(--cv-text);}
 .cv-steps li.done .dot {color:var(--cv-accent);}
 .cv-steps li.active {color:var(--cv-text);font-weight:600;}
 .cv-steps li.active .dot {color:var(--cv-accent);animation:cvpulse 1s ease-in-out infinite;}
-.cv-steps .detail {color:var(--cv-muted);font-weight:400;font-size:.85rem;display:block;}
+.cv-steps .detail {color:var(--cv-muted);font-weight:400;font-size:.83rem;display:block;margin-top:.1rem;}
 @keyframes cvpulse {0%,100%{opacity:.25;}50%{opacity:1;}}
-[data-testid="stFileUploaderDropzone"] {padding:2.2rem 1.5rem!important;transition:border-color .15s,background .15s;}
-[data-testid="stFileUploaderDropzone"]:hover {border-color:var(--cv-accent)!important;border-style:solid!important;}
-/* About us (popover trigger): cover every selector Streamlit versions use */
-[data-testid="stPopover"] button,
-[data-testid="stPopoverButton"],
-div[data-testid="stPopover"] > div > button,
-[data-testid="stPopover"] [data-baseweb="button"] {
-  background:var(--cv-panel-alt)!important;
-  background-color:var(--cv-panel-alt)!important;
-  color:var(--cv-text)!important;
-  border:1px solid var(--cv-border-strong)!important;
-  opacity:1!important;
-}
-[data-testid="stPopover"] button *,
-[data-testid="stPopoverButton"] * {
-  color:var(--cv-text)!important;
-  fill:var(--cv-text)!important;
-  opacity:1!important;
-}
-[data-testid="stPopover"] button:hover,
-[data-testid="stPopover"] button:focus,
-[data-testid="stPopoverButton"]:hover,
-[data-testid="stPopoverButton"]:focus {
-  background:var(--cv-panel)!important;
-  background-color:var(--cv-panel)!important;
-  border-color:var(--cv-accent)!important;
-  color:var(--cv-accent)!important;
-}
-[data-testid="stPopover"] button:hover *,
-[data-testid="stPopoverButton"]:hover * {color:var(--cv-accent)!important;fill:var(--cv-accent)!important;}
-/* Surfaces: visible edges and a little depth */
-[data-testid="stVerticalBlockBorderWrapper"] {border-color:var(--cv-border-strong)!important;box-shadow:var(--cv-shadow);}
-[data-testid="stExpander"],.summary-card,[data-testid="stAlert"] {border-color:var(--cv-border-strong)!important;}
+
+/* ---------- Existing contrast fixes ---------- */
+[data-testid="stExpander"] {background:var(--cv-panel)!important;border:1px solid var(--cv-border)!important;border-radius:12px!important;}
 [data-testid="stExpander"] details[open] summary {border-bottom:1px solid var(--cv-border);}
-/* Streamlit paints its own pastel fill on the inner alert element. Force it
-   transparent so dark mode never leaves pale text on a pale bar. */
+[data-testid="stExpander"] details > summary {background:var(--cv-panel-alt)!important;border-radius:11px;}
+[data-testid="stExpander"] details[open] > summary {border-radius:11px 11px 0 0;}
+[data-testid="stExpander"] details > summary p,
+[data-testid="stExpander"] details > summary span {color:var(--cv-text)!important;}
+[data-testid="stAlert"] {background:var(--cv-panel-alt)!important;border:1px solid var(--cv-border)!important;border-radius:12px!important;}
 [data-testid="stAlertContainer"],
 [data-testid="stAlertContentInfo"],
 [data-testid="stAlertContentSuccess"],
 [data-testid="stAlertContentWarning"],
-[data-testid="stAlertContentError"] {
-  background:transparent!important;
-  background-color:transparent!important;
-  color:var(--cv-text)!important;
-}
+[data-testid="stAlertContentError"] {background:transparent!important;background-color:transparent!important;color:var(--cv-text)!important;}
 [data-testid="stAlertContentInfo"] *,
 [data-testid="stAlertContentSuccess"] *,
 [data-testid="stAlertContentWarning"] *,
 [data-testid="stAlertContentError"] * {color:var(--cv-text)!important;}
-/* Some Streamlit versions colour expander headers from the base theme. */
-[data-testid="stExpander"] details > summary {background:var(--cv-panel-alt)!important;}
-[data-testid="stExpander"] details > summary p,
-[data-testid="stExpander"] details > summary span {color:var(--cv-text)!important;}
-.cv-hero {border-bottom:2px solid var(--cv-accent)!important;}
-/* Highlights that do not glare in dark mode */
 .hl-passage mark {background:var(--cv-mark-bg)!important;color:var(--cv-mark-text)!important;}
 .hl-passage .best {background:var(--cv-best-bg)!important;color:var(--cv-mark-text)!important;}
-/* Badges get a faint outline so they hold their shape on any surface */
-.verdict-badge {box-shadow:inset 0 0 0 1px currentColor;}
-/* Streamlit's own controls */
-[data-testid="stToggle"] [role="checkbox"][aria-checked="true"] {background:var(--cv-accent)!important;}
-[data-testid="stToggle"] [role="checkbox"] + div {background:var(--cv-text)!important;}
-[data-testid="stToggle"] [role="checkbox"][aria-checked="false"] {background:var(--cv-border-strong)!important;}
+.verdict-badge {font-size:.64rem;letter-spacing:.055em;padding:.28rem .58rem;box-shadow:inset 0 0 0 1px currentColor;}
+.source-flag {display:block;padding:.7rem .9rem;margin:.75rem 0;border:1px solid var(--cv-border);border-radius:10px;background:var(--cv-warning-bg);color:var(--cv-warning-text)!important;font-weight:600;line-height:1.45;}
+.source-flag * {color:inherit!important;}
+.source-flag-retracted {background:var(--cv-error-bg);color:var(--cv-error-text)!important;border-color:var(--cv-error-text);}
+
+/* ---------- Streamlit controls ---------- */
+.st-key-cv_topbar [role="switch"][aria-checked="true"] {accent-color:var(--cv-accent);}
+.st-key-cv_topbar [role="switch"][aria-checked="false"] {accent-color:var(--cv-border-strong);}
 [data-testid="stSlider"] [role="slider"] {background:var(--cv-accent)!important;box-shadow:0 0 0 3px var(--cv-panel);}
 [data-testid="stSlider"] [data-testid="stTickBarMin"],[data-testid="stSlider"] [data-testid="stTickBarMax"],
 [data-testid="stSliderThumbValue"] {color:var(--cv-text)!important;}
-[data-testid="stProgress"] > div > div {background:var(--cv-border)!important;}
 [data-testid="stProgressBar"]>div>div {background:var(--cv-accent)!important;}
-button[role="tab"] {color:var(--cv-muted)!important;}
-button[role="tab"][aria-selected="true"] {color:var(--cv-text)!important;}
-[data-baseweb="tab-highlight"] {background:var(--cv-accent)!important;}
-[data-baseweb="tab-border"] {background:var(--cv-border)!important;}
-/* Focus, hover and selection */
 :focus-visible {outline:2px solid var(--cv-accent)!important;outline-offset:2px;}
-::selection {background:var(--cv-accent);color:#071A18;}
-[data-testid="stButton"] button:hover:not(:disabled),[data-testid="stDownloadButton"] button:hover {background:var(--cv-panel-alt)!important;}
-[data-testid="stButton"] button[kind="primary"]:hover:not(:disabled) {filter:brightness(1.08);background:var(--cv-accent)!important;}
-[data-testid="stButton"] button:disabled {border-style:dashed!important;}
-[data-testid="stDownloadButton"] button[kind="primary"] {background:var(--cv-accent)!important;color:#071A18!important;border-color:var(--cv-accent)!important;}
+::selection {background:var(--cv-accent);color:var(--cv-accent-contrast);}
 ::-webkit-scrollbar {width:10px;height:10px;}
 ::-webkit-scrollbar-thumb {background:var(--cv-border-strong);border-radius:8px;}
 ::-webkit-scrollbar-track {background:transparent;}
-[data-testid="stButton"] button:disabled {background:var(--cv-panel-alt)!important;cursor:not-allowed;}
+
+/* ---------- Responsive ---------- */
+.st-key-cv_topbar [data-testid="stHorizontalBlock"] {flex-wrap:nowrap!important;align-items:center!important;}
+.st-key-cv_topbar [data-testid="stColumn"] {min-width:0!important;width:auto!important;}
+.st-key-cv_topbar [data-testid="stColumn"]:first-child {flex:1 1 auto!important;}
+.st-key-cv_topbar [data-testid="stColumn"]:last-child {flex:0 0 auto!important;}
+@media (max-width:700px) {
+  .block-container {padding-top:.7rem!important;}
+  .cv-display {font-size:2.45rem;max-width:14ch;}
+  .cv-report-title {font-size:2.05rem;}
+  .cv-claim-title {font-size:1.5rem;}
+  .cv-claim-verdict {align-items:flex-start;text-align:left;}
+  .st-key-cv_topbar [data-testid="stColumn"]:last-child {justify-content:flex-start;}
+  .cv-summary-legend {gap:.3rem .7rem;}
+}
 </style>
 """
 
