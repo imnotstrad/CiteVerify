@@ -414,7 +414,7 @@ def render_report(report: Report, settings: Settings) -> None:
         render_evaluation(settings)
 
     with about_tab:
-        render_about()
+        render_about(settings)
 
 
 def render_evaluation(settings: Settings) -> None:
@@ -460,7 +460,7 @@ def render_evaluation(settings: Settings) -> None:
     st.caption("Small sample. Do not present this as a general accuracy claim.")
 
 
-def render_about() -> None:
+def render_about(settings: Settings) -> None:
     st.markdown("### What CiteVerify does")
     st.write(
         "It reads a paper, extracts claims that have citations, resolves each "
@@ -500,10 +500,41 @@ def render_about() -> None:
             "one source-grounded LLM call per claim"
         )
     st.divider()
+    render_deployment_diagnostics(settings)
+    st.divider()
     st.caption(
         "Built for INNOVEDGE Hackathon 2026. CiteVerify is evidence for human "
         "review, not a final verdict on a paper."
     )
+
+
+def render_deployment_diagnostics(settings: Settings) -> None:
+    """Show what the running process actually loaded.
+
+    Deployed apps cannot read the local .env, so the usual failure is a missing
+    or misnamed environment variable. This reports presence and shape only —
+    never the secret itself.
+    """
+    with st.expander("Deployment diagnostics"):
+        key = settings.llm_api_key or ""
+        st.write(
+            {
+                "LLM_API_KEY present": bool(key),
+                "key length": len(key),
+                "key format recognised": key.startswith(("AQ.", "AIza")),
+                "LLM_MODEL": settings.llm_model,
+                "LLM_BASE_URL": settings.llm_base_url or "(SDK default)",
+                "CROSSREF_MAILTO": settings.crossref_mailto,
+                "demo report found": settings.demo_report_path.exists(),
+            }
+        )
+        if not key:
+            st.warning(
+                "Running without an API key, so only the demo report is available. "
+                "On Render, confirm the variable is named exactly LLM_API_KEY, then "
+                "trigger a new deploy — environment changes only reach a fresh "
+                "instance."
+            )
 
 
 def render_empty_state() -> None:
