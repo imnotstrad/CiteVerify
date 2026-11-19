@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
 
 from pydantic import BaseModel, Field
@@ -65,14 +66,6 @@ Rules:
 - high confidence requires a direct quote. Medium means indirect support.
 - Do not use the paper title as evidence. Use the source text.
 """
-
-RETRY_SUFFIX = """
-
-Your previous quote could not be found verbatim in SOURCE TEXT.
-Try again. Either return a quote that appears exactly in SOURCE TEXT, or set
-verdict to "unverifiable" and evidence_quote to "".
-"""
-
 
 class VerificationError(RuntimeError):
     """Raised when verification cannot be completed."""
@@ -182,17 +175,9 @@ def verify_claim(
             system=SYSTEM_PROMPT,
             user=prompt,
             schema=VerificationPayload,
+            max_attempts=1,
         )
         quote = (payload.evidence_quote or "").strip() or None
-        if payload.verdict != Verdict.UNVERIFIABLE and not quote_in_source(
-            quote, evidence_text
-        ):
-            payload = llm.complete_json(
-                system=SYSTEM_PROMPT,
-                user=prompt + RETRY_SUFFIX,
-                schema=VerificationPayload,
-            )
-            quote = (payload.evidence_quote or "").strip() or None
     except Exception as exc:
         return _unverifiable(
             claim,
@@ -249,11 +234,34 @@ def verify_claims(
     progress: Callable[[int, int, Claim], None] | None = None,
 ) -> list[ClaimResult]:
     by_id = {reference.id: reference for reference in references}
-    results: list[ClaimResult] = []
+    if not claims:
+        return []
+
+    # Each claim is independent. Run a small bounded batch concurrently so
+    # network latency is overlapped without flooding Gemini's rate limits.
     total = len(claims)
-    for index, claim in enumerate(claims, start=1):
-        result = verify_claim(claim, by_id.get(claim.reference_id), llm)
-        results.append(result)
-        if progress:
-            progress(index, total, claim)
-    return results
+    ordered_results: list[ClaimResult | None] = [None] * total
+    workers = min(4, total)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {
+            pool.submit(verify_claim, claim, by_id.get(claim.reference_id), llm): (i, claim)
+            for i, claim in enumerate(claims)
+        }
+        completed = 0
+        for future in as_completed(futures):
+            index, claim = futures[future]
+            try:
+                ordered_results[index] = future.result()
+            except Exception as exc:  # Keep one unexpected failure from aborting the report.
+                ordered_results[index] = _unverifiable(
+                    claim,
+                    by_id.get(claim.reference_id),
+                    f"Verification failed for this claim: {exc}",
+                    [FLAG_UNRESOLVED],
+                )
+            completed += 1
+            if progress:
+                progress(completed, total, claim)
+
+    # Preserve the original claim order in the final report.
+    return [result for result in ordered_results if result is not None]
