@@ -563,8 +563,8 @@ def render_about(settings: Settings) -> None:
         )
         st.markdown("#### Stack")
         st.caption(
-            "Python · Streamlit · PyMuPDF · Crossref · OpenAlex · Pydantic · "
-            "one source-grounded LLM call per claim"
+            "Python · Streamlit · PyMuPDF · Hugging Face sentence-transformers · "
+            "Crossref · OpenAlex · Pydantic · Gemini source-grounded verification"
         )
     st.divider()
     render_deployment_diagnostics(settings)
