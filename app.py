@@ -18,6 +18,7 @@ from citeverify.evidence import find_evidence, highlight
 from citeverify.extract import ExtractionError, extract_claims_and_references
 from citeverify.ingest import extract_pdf, extract_text
 from citeverify.llm import LLMClient, LLMUnavailable
+from citeverify.pdf_export import PDFUnavailable, build_fixes_pdf
 from citeverify.models import ClaimResult, Confidence, Reference, Report, Verdict
 from citeverify.report import (
     CONFIDENCE_LABELS,
@@ -643,6 +644,53 @@ def render_claim(
                     render_citation_fix(reference)
 
 
+def render_export(report: Report) -> None:
+    """Shown on the last claim: a PDF listing every claim with its suggested fix."""
+    with st.container(border=True):
+        st.markdown("#### That was the last claim")
+        st.caption(
+            "Get a PDF listing every claim with its suggested fix, plus corrected "
+            "reference formatting."
+        )
+        pdf_bytes = None
+        try:
+            pdf_bytes = build_fixes_pdf(report)
+        except PDFUnavailable as exc:
+            st.warning(f"{exc} The Markdown report below still works.")
+        except Exception as exc:  # never let export break the cards
+            st.error(f"Could not build the PDF: {exc}")
+
+        if pdf_bytes is not None:
+            st.download_button(
+                "Create PDF with suggested fixes",
+                data=pdf_bytes,
+                file_name="citeverify_suggested_fixes.pdf",
+                mime="application/pdf",
+                type="primary",
+                key="download_pdf",
+                use_container_width=True,
+            )
+        md_col, json_col = st.columns(2)
+        with md_col:
+            st.download_button(
+                "Download Markdown",
+                data=report_to_markdown(report),
+                file_name="citeverify_report.md",
+                mime="text/markdown",
+                key="download_md",
+                use_container_width=True,
+            )
+        with json_col:
+            st.download_button(
+                "Download JSON",
+                data=report_to_json(report),
+                file_name="citeverify_report.json",
+                mime="application/json",
+                key="download_json",
+                use_container_width=True,
+            )
+
+
 def render_report(report: Report, settings: Settings, llm: LLMClient) -> None:
     if report.mode == "demo":
         st.caption("Demo report · The citing paper is illustrative; the cited papers and abstracts are real.")
@@ -670,6 +718,9 @@ def render_report(report: Report, settings: Settings, llm: LLMClient) -> None:
         st.session_state.claim_index = min(len(shown)-1, current_index+1)
         st.rerun()
     st.progress((current_index+1)/len(shown))
+
+    if current_index == len(shown) - 1:
+        render_export(report)
 
     st.divider()
     st.markdown("**Finished reviewing?**")
