@@ -29,8 +29,12 @@ _model_error: Exception | None = None
 
 
 def local_embeddings_enabled() -> bool:
-    """Set LOCAL_EMBEDDINGS=0 to skip the model (e.g. on a small free host)."""
-    value = os.getenv("LOCAL_EMBEDDINGS", "1").strip().casefold()
+    """Keyword ranking is the safe default; opt in with LOCAL_EMBEDDINGS=1.
+
+    Loading sentence-transformers/PyTorch costs several hundred MB and OOM-kills
+    the 512 MB free host. Semantic ranking is opt-in only.
+    """
+    value = os.getenv("LOCAL_EMBEDDINGS", "0").strip().casefold()
     return value not in {"0", "false", "no", "off"}
 
 

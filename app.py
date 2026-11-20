@@ -18,6 +18,7 @@ from citeverify.evidence import find_evidence, highlight
 from citeverify.extract import ExtractionError, extract_claims_and_references
 from citeverify.ingest import extract_pdf, extract_text
 from citeverify.llm import LLMClient, LLMUnavailable, error_detail
+from citeverify.local_matcher import local_embeddings_enabled
 from citeverify.pdf_export import PDFUnavailable, build_fixes_pdf
 from citeverify.models import ClaimResult, Confidence, Reference, Report, Verdict
 from citeverify.report import (
@@ -1063,6 +1064,8 @@ def render_deployment_diagnostics(settings: Settings) -> None:
                 "key format recognised": key.startswith(("AQ.", "AIza")),
                 "LLM_MODEL": settings.llm_model,
                 "LLM_BASE_URL": settings.llm_base_url or "(SDK default)",
+                "LOCAL_EMBEDDINGS": local_embeddings_enabled(),
+                "retrieval": "semantic" if local_embeddings_enabled() else "keyword",
                 "CROSSREF_MAILTO": settings.crossref_mailto,
                 "demo report found": settings.demo_report_path.exists(),
             }

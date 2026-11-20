@@ -238,11 +238,11 @@ def verify_claims(
     if not claims:
         return []
 
-    # Each claim is independent. Run a small bounded batch concurrently so
-    # network latency is overlapped without flooding Gemini's rate limits.
+    # Each claim is independent. Two workers overlap network latency without
+    # tripling peak memory or hammering Gemini's free-tier rate limits.
     total = len(claims)
     ordered_results: list[ClaimResult | None] = [None] * total
-    workers = min(4, total)
+    workers = min(2, total)
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {
             pool.submit(verify_claim, claim, by_id.get(claim.reference_id), llm): (i, claim)

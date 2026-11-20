@@ -10,7 +10,7 @@ services:
     plan: free
     branch: main
     autoDeploy: true
-    healthCheckPath: /
+    healthCheckPath: /_stcore/health
     # Render defaults new services to Python 3.14.10 (since 2026-11-03).
     # Pin 3.13.5 to match the version the project is developed and tested on.
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt

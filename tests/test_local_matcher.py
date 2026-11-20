@@ -38,6 +38,19 @@ def test_embeddings_can_be_switched_off(monkeypatch):
     assert "Ocean temperature" in selected[0]
 
 
+def test_keyword_is_the_safe_default(monkeypatch):
+    def must_not_load():
+        raise AssertionError("model should not be loaded by default")
+
+    monkeypatch.delenv("LOCAL_EMBEDDINGS", raising=False)
+    monkeypatch.setattr(local_matcher, "_load_model", must_not_load)
+    selected, method = local_matcher.retrieve_passages(
+        "ocean temperature", "Ocean temperature rose. Unrelated sentence here.", top_k=1
+    )
+    assert method == "keyword"
+    assert "Ocean temperature" in selected[0]
+
+
 def test_model_load_is_serialized_and_failure_is_remembered(monkeypatch):
     import sys
     import threading
